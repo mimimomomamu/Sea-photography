@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Camera Tracker</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #a0c4ff; /* Medium light blue */
+            overflow: hidden;
+            cursor: default;
+            user-select: none;
+        }
+
+        #fish-camera {
+            position: fixed;
+            width: 100px; /* Default size, adjust as needed */
+            height: auto;
+            pointer-events: none; /* Prevents the image from interfering with mouse events */
+            display: none;
+            transform: translate(-50%, -120%); /* Centers horizontally, places above the cursor */
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+    <img id="fish-camera" src="fishcamera.png" alt="Fish Camera">
+
+    <script>
+        const fishCamera = document.getElementById('fish-camera');
+        let isMouseDown = false;
+
+        function updatePosition(e) {
+            fishCamera.style.left = e.clientX + 'px';
+            fishCamera.style.top = e.clientY + 'px';
+        }
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // Left mouse button
+                isMouseDown = true;
+                fishCamera.style.display = 'block';
+                updatePosition(e);
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isMouseDown) {
+                updatePosition(e);
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (e.button === 0) { // Left mouse button
+                isMouseDown = false;
+                fishCamera.style.display = 'none';
+            }
+        });
+
+        // Optional: Hide if mouse leaves the window while holding
+        window.addEventListener('mouseleave', () => {
+            isMouseDown = false;
+            fishCamera.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
