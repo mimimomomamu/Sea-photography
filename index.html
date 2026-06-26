@@ -3,73 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fish Camera Tracker</title>
+    <title>Fish Camera Follower</title>
     <style>
-        *, *::before, *::after {
+        * {
             box-sizing: border-box;
-        }
-        
-        body {
             margin: 0;
             padding: 0;
+        }
+        body {
+            background-color: #a0c4ff; /* Medium light blue */
             width: 100vw;
             height: 100vh;
-            background-color: #a0c4ff; /* Medium light blue */
             overflow: hidden;
             cursor: default;
             user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
         }
-
+        .instruction {
+            text-align: center;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            font-size: 24px;
+            font-weight: 600;
+            opacity: 0.8;
+        }
         #fish-camera {
-            position: fixed;
-            width: 200px; /* Made 2x bigger (from 100px to 200px) */
+            position: absolute;
+            width: 150px; /* Pretty big */
             height: auto;
-            pointer-events: none; /* Prevents the image from interfering with mouse events */
             display: none;
-            transform: translate(-50%, -50%); /* Centers the image directly ON TOP of the cursor */
-            z-index: 9999;
+            pointer-events: none; /* Crucial so it doesn't block mouse events */
+            transform: translate(-50%, -50%); /* Center the image exactly on the cursor */
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
 
+    <div class="instruction">Click and hold left mouse button</div>
     <img id="fish-camera" src="fishcamera.png" alt="Fish Camera">
 
     <script>
         const fishCamera = document.getElementById('fish-camera');
-        let isMouseDown = false;
-
-        function updatePosition(e) {
-            fishCamera.style.left = e.clientX + 'px';
-            fishCamera.style.top = e.clientY + 'px';
-        }
 
         window.addEventListener('mousedown', (e) => {
             if (e.button === 0) { // Left mouse button
-                isMouseDown = true;
-                fishCamera.style.display = 'block';
                 updatePosition(e);
+                fishCamera.style.display = 'block';
             }
         });
 
         window.addEventListener('mousemove', (e) => {
-            if (isMouseDown) {
+            if (fishCamera.style.display === 'block') {
                 updatePosition(e);
             }
         });
 
         window.addEventListener('mouseup', (e) => {
-            if (e.button === 0) { // Left mouse button
-                isMouseDown = false;
+            if (e.button === 0) {
                 fishCamera.style.display = 'none';
             }
         });
 
-        // Optional: Hide if mouse leaves the window while holding
+        // Hide it if the mouse leaves the window while holding down
         window.addEventListener('mouseleave', () => {
-            isMouseDown = false;
             fishCamera.style.display = 'none';
         });
+
+        function updatePosition(e) {
+            fishCamera.style.left = e.clientX + 'px';
+            fishCamera.style.top = e.clientY + 'px';
+        }
     </script>
 </body>
 </html>
