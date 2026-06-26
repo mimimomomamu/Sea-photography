@@ -923,7 +923,8 @@
                     name: fishData.name,
                     description: fishData.description,
                     sizeMultiplier: sizeMultiplier,
-                    vStretch: fishData.vStretch !== undefined ? fishData.vStretch : 2.0
+                    vStretch: fishData.vStretch !== undefined ? fishData.vStretch : 2.0,
+                    hasBeenPhotographed: false
                 };
 
                 sardinesList.push(sardineObj);
@@ -1052,6 +1053,15 @@
                       fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
                     
                     let fishWorth = fish.value;
+
+                    // Apply multipliers for brand new fish vs repeated on-screen photos
+                    if (!discoveredFishIds.includes(fish.id)) {
+                        fishWorth = fishWorth * 3;
+                    } else if (fish.hasBeenPhotographed) {
+                        fishWorth = fishWorth * 0.5;
+                    }
+                    
+                    fish.hasBeenPhotographed = true;
 
                     // Calculate penalty scaling based on your explicit zoom out positions
                     // min=0.2, max=1.5. range size = 1.3
