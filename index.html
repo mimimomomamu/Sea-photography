@@ -486,10 +486,10 @@
                 description: "a coloful fast fish",
                 imageSrc: "mahimahi.png", 
                 value: 250,
-                baseWidth: 250,
-                baseHeight: 125,
-                minSpeed: 1,
-                maxSpeed: 2.5,
+                baseWidth: 330,
+                baseHeight: 165,
+                minSpeed: 2,
+                maxSpeed: 4,
                 rarity: 0.05,
                 vStretch: 2.0
             }
@@ -831,7 +831,7 @@
 
             sardinesList.push(sardineObj);
 
-            const nextSpawnDelay = Math.random() * 8000 + 2000;
+            const nextSpawnDelay = Math.random() * 7000 + 1750;
             setTimeout(spawnSardine, nextSpawnDelay);
         }
 
