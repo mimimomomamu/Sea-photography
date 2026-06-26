@@ -624,7 +624,7 @@
         sizeBtn.innerText = `Size Increase: Lvl 20 (MAX)`;
         sizeBtn.disabled = true;
     } else {
-        const sizeCost = getUpgradeCost(sizeLevel + 4.5);
+        const sizeCost = getUpgradeCost(sizeLevel + 4.4);
         sizeBtn.innerText = `Size Increase: Lvl ${sizeLevel} ($${sizeCost})`;
         sizeBtn.disabled = currentMoney < sizeCost;
     }
@@ -635,7 +635,7 @@
         spawnBtn.innerText = `Spawn Rate: Lvl 15 (MAX)`;
         spawnBtn.disabled = true;
     } else {
-        const spawnCost = getUpgradeCost(spawnLevel + 12);
+        const spawnCost = getUpgradeCost(spawnLevel + 12.5);
         spawnBtn.innerText = `Spawn Rate: Lvl ${spawnLevel} ($${spawnCost})`;
         spawnBtn.disabled = currentMoney < spawnCost;
     }
@@ -646,7 +646,7 @@
         rarityBtn.innerText = `Rarity Luck: Lvl 10 (MAX)`;
         rarityBtn.disabled = true;
     } else {
-        const rarityCost = getUpgradeCost(rarityLevel + 9);
+        const rarityCost = getUpgradeCost(rarityLevel + 9.7);
         rarityBtn.innerText = `Rarity Luck: Lvl ${rarityLevel} ($${rarityCost})`;
         rarityBtn.disabled = currentMoney < rarityCost;
     }
