@@ -620,8 +620,8 @@
 
     // Size UI with Max Cap Check
     const sizeBtn = document.getElementById('upgrade-size-btn');
-    if (sizeLevel >= 30) {
-        sizeBtn.innerText = `Size Increase: Lvl 30 (MAX)`;
+    if (sizeLevel >= 20) {
+        sizeBtn.innerText = `Size Increase: Lvl 20 (MAX)`;
         sizeBtn.disabled = true;
     } else {
         const sizeCost = getUpgradeCost(sizeLevel);
@@ -631,8 +631,8 @@
 
     // Spawn Rate UI with Max Cap Check
     const spawnBtn = document.getElementById('upgrade-spawn-btn');
-    if (spawnLevel >= 20) {
-        spawnBtn.innerText = `Spawn Rate: Lvl 20 (MAX)`;
+    if (spawnLevel >= 15) {
+        spawnBtn.innerText = `Spawn Rate: Lvl 15 (MAX)`;
         spawnBtn.disabled = true;
     } else {
         const spawnCost = getUpgradeCost(spawnLevel);
@@ -642,8 +642,8 @@
 
     // Rarity Luck UI with Max Cap Check
     const rarityBtn = document.getElementById('upgrade-rarity-btn');
-    if (rarityLevel >= 20) {
-        rarityBtn.innerText = `Rarity Luck: Lvl 20 (MAX)`;
+    if (rarityLevel >= 10) {
+        rarityBtn.innerText = `Rarity Luck: Lvl 10 (MAX)`;
         rarityBtn.disabled = true;
     } else {
         const rarityCost = getUpgradeCost(rarityLevel);
@@ -661,7 +661,7 @@
         }
     } else if (type === 'size') {
         // --- MAX LEVEL CAP: 30 ---
-        if (sizeLevel >= 30) return; 
+        if (sizeLevel >= 20) return; 
         
         const cost = getUpgradeCost(sizeLevel);
         if (currentMoney >= cost) {
@@ -670,7 +670,7 @@
         }
     } else if (type === 'spawn') {
         // --- MAX LEVEL CAP: 20 ---
-        if (spawnLevel >= 20) return;
+        if (spawnLevel >= 15) return;
 
         const cost = getUpgradeCost(spawnLevel);
         if (currentMoney >= cost) {
@@ -679,7 +679,7 @@
         }
     } else if (type === 'rarity') {
         // --- MAX LEVEL CAP: 20 ---
-        if (rarityLevel >= 20) return;
+        if (rarityLevel >= 10) return;
 
         const cost = getUpgradeCost(rarityLevel);
         if (currentMoney >= cost) {
