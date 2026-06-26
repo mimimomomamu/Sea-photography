@@ -22,6 +22,31 @@
             position: relative;
         }
         
+        /* Money counter styling in top left */
+        #money-counter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+        }
+
+        /* Money popup above the camera */
+        #money-popup {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+            z-index: 2000;
+            opacity: 0;
+            transform: translate(-50%, -100%);
+            transition: opacity 0.3s ease-out, top 0.3s ease-out;
+        }
+        
         /* UI Control Layer */
         .ui-container {
             position: absolute;
@@ -154,10 +179,11 @@
 </head>
 <body>
 
+    <div id="money-counter">0$</div>
+    <div id="money-popup">+$0</div>
     <div id="flash"></div>
     <div class="ui-container">
         <div class="instruction">
-           
             <span></span>
         </div>
         <div class="controls" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
@@ -180,12 +206,15 @@
         const photoCanvas = document.getElementById('photo-canvas');
         const flash = document.getElementById('flash');
         const zoomSlider = document.getElementById('zoomSlider');
+        const moneyCounter = document.getElementById('money-counter');
+        const moneyPopup = document.getElementById('money-popup');
         const pCtx = photoCanvas.getContext('2d');
         
         let isHolding = false;
         let isTakingPhoto = false;
         let mouseX = 0;
         let mouseY = 0;
+        let currentMoney = 0;
 
         const normalSize = 340; 
         const photoSize = 520;  
@@ -404,7 +433,7 @@
                 flash.style.opacity = '0';
             }, 50);
 
-            // 2. Capture a frozen instance of what the viewfinder sees
+            // 2. Capture a frozen instance of what the viewfinder sees & count visible sardines
             const viewRect = document.getElementById('viewfinder').getBoundingClientRect();
             const zoomValue = parseFloat(zoomSlider.value);
             
@@ -415,6 +444,8 @@
             pCtx.fillStyle = '#a0c4ff';
             pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
             
+            let sardinesInPhoto = 0;
+
             sardinesList.forEach(fish => {
                 const fRect = fish.element.getBoundingClientRect();
                 const imgRect = fish.imgElement.getBoundingClientRect();
@@ -422,6 +453,7 @@
                 if (!(fRect.right < viewRect.left || fRect.left > viewRect.right || 
                       fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
                     
+                    sardinesInPhoto++;
                     const relX = fRect.left - viewRect.left;
                     const relY = fRect.top - viewRect.top;
                     
@@ -453,6 +485,11 @@
             });
             pCtx.restore();
 
+            // Calculate earnings
+            const earnings = sardinesInPhoto * 15;
+            currentMoney += earnings;
+            moneyCounter.innerText = currentMoney + '$';
+
             // 3. Zoom UP and center camera frame
             setTimeout(() => {
                 cameraContainer.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
@@ -460,12 +497,21 @@
                 cameraContainer.style.height = photoSize + 'px';
                 cameraContainer.style.left = '50%';
                 cameraContainer.style.top = '50%';
+
+                // Show total money got from photo above the camera lens area
+                moneyPopup.innerText = '+$' + earnings;
+                moneyPopup.style.left = '50%';
+                moneyPopup.style.top = 'calc(50% - ' + (photoSize / 2 + 15) + 'px)';
+                moneyPopup.style.opacity = '1';
             }, 100);
 
             // 4. Return to handling state after 2.2 seconds
             setTimeout(() => {
                 cameraContainer.style.transition = 'all 0.4s ease-in-out';
                 isTakingPhoto = false;
+                
+                // Hide popup
+                moneyPopup.style.opacity = '0';
                 
                 if (isHolding) {
                     cameraContainer.style.width = normalSize + 'px';
