@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fish photographing</title>
+    <title>taking photos of fish yay</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,99 +17,359 @@
             overflow: hidden;
             cursor: default;
             user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+            position: relative;
+        }
+        
+        /* Instructions UI */
+        .instruction {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 22px;
+            font-weight: 600;
+            z-index: 10;
+        }
+        .instruction span {
+            display: block;
+            font-size: 16px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* Squash and Stretch CSS Animation for active swimming */
+        @keyframes swimWobble {
+            0% { transform: scale(1, 1); }
+            25% { transform: scale(1.08, 0.92); }
+            50% { transform: scale(1, 1); }
+            75% { transform: scale(0.92, 1.08); }
+            100% { transform: scale(1, 1); }
+        }
+
+        /* Sardine Container - x2 bigger */
+        .sardine-container {
+            position: absolute;
+            width: 180px;
+            height: 90px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .sardine-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            animation: swimWobble 0.7s infinite ease-in-out;
+        }
+
+        /* Camera Frame Container */
+        #camera-container {
+            position: absolute;
+            width: 250px; 
+            height: 250px;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #ffffff;
+            transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                        top 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                        width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                        height 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .instruction {
-            text-align: center;
-            pointer-events: none;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-            font-size: 24px;
-            font-weight: 600;
-            opacity: 0.8;
-            margin-bottom: 100px; /* Shift text slightly up so it doesn't clash with the camera resting at the bottom */
-        }
-        #fish-camera {
+
+        /* The fishcamera image with a hole in it */
+        #fish-camera-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
             position: absolute;
-            width: 350px; /* Made it slightly bigger (from 150px to 220px) */
-            height: auto;
-            pointer-events: none; /* Crucial so it doesn't block mouse events */
-            transform: translate(-50%, -50%); /* Center the image on its coordinates */
-            z-index: 1000;
-            
-            /* CSS Transition for smooth sliding animation */
-            transition: left 0.3s ease-out, top 0.3s ease-out;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+
+        /* The Viewfinder/Hole where the captured photo shows up */
+        #viewfinder {
+            width: 65%; 
+            height: 65%;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+
+        /* Canvas inside the viewfinder holding the crisp frame */
+        #photo-canvas {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        /* Flash overlay effect */
+        #flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 2000;
         }
     </style>
 </head>
 <body>
 
-    
-    <img id="fish-camera" src="fishcamera.png" alt="Fish Camera">
+    <div id="flash"></div>
+    <div class="instruction">
+      
+    </div>
+
+    <!-- Camera Container -->
+    <div id="camera-container">
+        <img id="fish-camera-img" src="fishcamera.png" alt="Fish Camera">
+        <div id="viewfinder">
+            <canvas id="photo-canvas"></canvas>
+        </div>
+    </div>
 
     <script>
-        const fishCamera = document.getElementById('fish-camera');
+        const cameraContainer = document.getElementById('camera-container');
+        const photoCanvas = document.getElementById('photo-canvas');
+        const flash = document.getElementById('flash');
+        
         let isHolding = false;
+        let isTakingPhoto = false;
+        let mouseX = 0;
+        let mouseY = 0;
 
-        // Function to move the camera to its resting position (bottom-middle of the screen)
+        const normalSize = 250;
+        const photoSize = 450; 
+
+        let sardinesList = [];
+
         function sendToRestingPosition() {
+            if (isTakingPhoto) return;
             const restX = window.innerWidth / 2;
-            const restY = window.innerHeight - 110; // Positioned near the bottom, adjusted for its size (220px / 2)
-            fishCamera.style.left = restX + 'px';
-            fishCamera.style.top = restY + 'px';
+            const restY = window.innerHeight - (normalSize / 2) + 20; 
+            cameraContainer.style.width = normalSize + 'px';
+            cameraContainer.style.height = normalSize + 'px';
+            cameraContainer.style.left = restX + 'px';
+            cameraContainer.style.top = restY + 'px';
         }
 
-        // Initialize at resting position when the page loads
         sendToRestingPosition();
 
-        // Handle window resizing so it stays centered at the bottom
         window.addEventListener('resize', () => {
-            if (!isHolding) {
-                sendToRestingPosition();
+            if (!isHolding && !isTakingPhoto) sendToRestingPosition();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            if (isHolding && !isTakingPhoto) {
+                cameraContainer.style.transition = 'none';
+                cameraContainer.style.left = mouseX + 'px';
+                cameraContainer.style.top = mouseY + 'px';
             }
         });
 
         window.addEventListener('mousedown', (e) => {
-            if (e.button === 0) { // Left mouse button
-                isHolding = true;
-                // Temporarily disable transition for snappy tracking while dragging
-                fishCamera.style.transition = 'left 0.3s ease-out, top 0.3s ease-out';
-                updatePosition(e);
-            }
-        });
+            if (isTakingPhoto) return;
 
-        window.addEventListener('mousemove', (e) => {
-            if (isHolding) {
-                // Remove the transition while holding so it perfectly sticks to the cursor movement
-                fishCamera.style.transition = 'none';
-                updatePosition(e);
+            if (e.button === 0) { // Left Click
+                isHolding = true;
+                cameraContainer.style.transition = 'left 0.3s ease-out, top 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out';
+                cameraContainer.style.left = mouseX + 'px';
+                cameraContainer.style.top = mouseY + 'px';
+            } 
+            else if (e.button === 1) { // Middle Click
+                e.preventDefault();
+                if (isHolding) {
+                    takePicture();
+                }
             }
         });
 
         window.addEventListener('mouseup', (e) => {
             if (e.button === 0 && isHolding) {
                 isHolding = false;
-                // Re-enable transition for the smooth slide back down
-                fishCamera.style.transition = 'left 0.4s ease-out, top 0.4s ease-out';
-                sendToRestingPosition();
+                if (!isTakingPhoto) {
+                    cameraContainer.style.transition = 'left 0.4s ease-out, top 0.4s ease-out, width 0.4s ease-out, height 0.4s ease-out';
+                    sendToRestingPosition();
+                }
             }
         });
 
-        // If the mouse leaves the browser window, release the hold
-        window.addEventListener('mouseleave', () => {
-            if (isHolding) {
-                isHolding = false;
-                fishCamera.style.transition = 'left 0.4s ease-out, top 0.4s ease-out';
-                sendToRestingPosition();
-            }
+        window.addEventListener('auxclick', (e) => {
+            if (e.button === 1) e.preventDefault();
         });
 
-        function updatePosition(e) {
-            fishCamera.style.left = e.clientX + 'px';
-            fishCamera.style.top = e.clientY + 'px';
+        // --- Sardine Spawning & Logic Engine ---
+        function spawnSardine() {
+            const side = Math.random() < 0.5 ? 'left' : 'right';
+            
+            const container = document.createElement('div');
+            container.classList.add('sardine-container');
+            
+            const img = document.createElement('img');
+            img.src = 'sardine.png';
+            img.classList.add('sardine-img');
+            
+            img.style.animationDelay = (Math.random() * -0.7) + 's';
+            container.appendChild(img);
+            
+            const topPos = Math.random() * (window.innerHeight - 200) + 50;
+            container.style.top = topPos + 'px';
+
+            let startX, targetX, speed;
+            speed = Math.random() * 0.8 + 0.8; 
+
+            if (side === 'left') {
+                startX = -220; 
+                targetX = window.innerWidth + 220;
+                container.style.left = startX + 'px';
+                container.style.transform = 'scaleX(-1)'; 
+            } else {
+                startX = window.innerWidth + 220;
+                targetX = -220;
+                container.style.left = startX + 'px';
+                container.style.transform = 'scaleX(1)';
+            }
+
+            document.body.appendChild(container);
+
+            const sardineObj = {
+                element: container,
+                imgElement: img,
+                x: startX,
+                y: topPos,
+                targetX: targetX,
+                speed: speed,
+                direction: side === 'left' ? 1 : -1,
+                width: 180,  
+                height: 90
+            };
+
+            sardinesList.push(sardineObj);
+
+            const nextSpawnDelay = Math.random() * 8000 + 2000;
+            setTimeout(spawnSardine, nextSpawnDelay);
+        }
+
+        function updateSardines() {
+            for (let i = sardinesList.length - 1; i >= 0; i--) {
+                const fish = sardinesList[i];
+                fish.x += fish.speed * fish.direction;
+                fish.element.style.left = fish.x + 'px';
+
+                if ((fish.direction === 1 && fish.x > fish.targetX) || 
+                    (fish.direction === -1 && fish.x < fish.targetX)) {
+                    fish.element.remove();
+                    sardinesList.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(updateSardines);
+        }
+
+        setTimeout(spawnSardine, 1000);
+        requestAnimationFrame(updateSardines);
+
+        // --- Camera Picture Taking Operation ---
+        function takePicture() {
+            if (isTakingPhoto) return;
+            isTakingPhoto = true;
+
+            // 1. Flash effect
+            flash.style.opacity = '1';
+            flash.style.transition = 'none';
+            setTimeout(() => {
+                flash.style.transition = 'opacity 0.4s ease-out';
+                flash.style.opacity = '0';
+            }, 50);
+
+            // 2. Capture Viewfinder Area with HD Upscaling
+            const viewRect = document.getElementById('viewfinder').getBoundingClientRect();
+            const pCtx = photoCanvas.getContext('2d');
+            
+            const scaleFactor = 4;
+            photoCanvas.width = viewRect.width * scaleFactor;
+            photoCanvas.height = viewRect.height * scaleFactor;
+            
+            pCtx.scale(scaleFactor, scaleFactor);
+            pCtx.imageSmoothingEnabled = true;
+            pCtx.imageSmoothingQuality = 'high';
+            
+            pCtx.fillStyle = '#a0c4ff';
+            pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
+            
+            sardinesList.forEach(fish => {
+                const fRect = fish.element.getBoundingClientRect();
+                
+                if (!(fRect.right < viewRect.left || fRect.left > viewRect.right || 
+                      fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
+                    
+                    const relX = fRect.left - viewRect.left;
+                    const relY = fRect.top - viewRect.top;
+                    
+                    pCtx.save();
+                    pCtx.translate(relX + fRect.width / 2, relY + fRect.height / 2);
+                    
+                    if (fish.direction === 1) {
+                        pCtx.scale(-1, 1);
+                    } else {
+                        pCtx.scale(1, 1);
+                    }
+                    
+                    /* Forced Upward Stretch Fix:
+                       We explicitly scale the canvas transform context vertically when rendering the photo canvas image layer.
+                       Applying a 1.3x multiplier on the Y axis manually forces the captured photograph output 
+                       to remain visibly tall/stretched upwards, counteracting the asset flattening bug!
+                    */
+                    pCtx.scale(1.0, 3.3);
+                    
+                    pCtx.drawImage(fish.imgElement, -fish.width / 2, -fish.height / 2, fish.width, fish.height);
+                    
+                    pCtx.restore();
+                }
+            });
+
+            photoCanvas.style.display = 'block';
+
+            // 3. Zoom up and center camera frame
+            setTimeout(() => {
+                cameraContainer.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                cameraContainer.style.width = photoSize + 'px';
+                cameraContainer.style.height = photoSize + 'px';
+                cameraContainer.style.left = '50%';
+                cameraContainer.style.top = '50%';
+            }, 100);
+
+            // 4. Return to handling state after 2.2 seconds
+            setTimeout(() => {
+                cameraContainer.style.transition = 'all 0.4s ease-in-out';
+                photoCanvas.style.display = 'none'; 
+                
+                isTakingPhoto = false;
+                
+                if (isHolding) {
+                    cameraContainer.style.width = normalSize + 'px';
+                    cameraContainer.style.height = normalSize + 'px';
+                    cameraContainer.style.left = mouseX + 'px';
+                    cameraContainer.style.top = mouseY + 'px';
+                } else {
+                    sendToRestingPosition();
+                }
+            }, 2200);
         }
     </script>
 </body>
