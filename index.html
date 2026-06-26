@@ -229,6 +229,45 @@
             object-fit: contain;
         }
 
+        /* Upgrades Container on Bottom Left side */
+        #upgrades-container {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 1100;
+            pointer-events: auto;
+        }
+        .upgrade-btn {
+            background: #ffd700;
+            color: #000000;
+            border: 4px solid #000000;
+            border-radius: 0px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: left;
+            min-width: 240px;
+            box-shadow: 2px 2px 0px #000000;
+        }
+        .upgrade-btn:hover {
+            background: #ffea70;
+        }
+        .upgrade-btn:disabled {
+            background: #8c834e;
+            color: #444444;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .upgrade-btn:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
         /* RETRO PIXEL ART SCROLLABLE COLLECTION PANEL */
         #gallery-panel {
             position: absolute;
@@ -379,12 +418,11 @@
         </div>
         <div class="controls" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
             <label for="zoomSlider"> Zoom Out</label>
-            <input type="range" id="zoomSlider" min="0.05" max="1.5" step="0.05" value="1.2">
+            <input type="range" id="zoomSlider" min="0.2" max="1.5" step="0.05" value="1.2">
             <label for="zoomSlider">Zoom In</label>
         </div>
     </div>
 
-    <!-- Camera Container -->
     <div id="camera-container">
         <img id="fish-camera-img" src="fishcamera.png" alt="Fish Camera">
         <div id="viewfinder">
@@ -392,20 +430,22 @@
         </div>
     </div>
 
-    <!-- Gallery Trigger Button -->
+    <div id="upgrades-container" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <button id="upgrade-quality-btn" class="upgrade-btn" onclick="buyUpgrade('quality')">Photo Quality: Lvl 0 ($200)</button>
+        <button id="upgrade-size-btn" class="upgrade-btn" onclick="buyUpgrade('size')">Size Increase: Lvl 0 ($200)</button>
+    </div>
+
     <div id="gallery-btn" onclick="toggleGallery(true)" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
         <img id="gallery-btn-img" src="gallery.png" alt="Gallery">
     </div>
 
-    <!-- Gallery Overlay Panel -->
     <div id="gallery-panel" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
         <div id="gallery-header">
             <h2>Fish Collection</h2>
             <button id="gallery-close-btn" onclick="toggleGallery(false)">Close</button>
         </div>
         <div id="gallery-content">
-            <!-- Discovered fish records go here -->
-        </div>
+            </div>
     </div>
 
     <script>
@@ -461,10 +501,56 @@
         let currentMoney = 0;
         let discoveredFishIds = []; 
 
+        // Upgrade Track Levels
+        let qualityLevel = 0;
+        let sizeLevel = 0;
+
         const normalSize = 340; 
         const photoSize = 520;  
 
         let sardinesList = [];
+
+        // Calculate dynamic upgrade costs matching rule: 200, +1.2x first time, +1.2x everytime
+        function getUpgradeCost(level) {
+            let cost = 200;
+            for (let i = 0; i < level; i++) {
+                cost = cost * 1.2 + 1.2;
+            }
+            return Math.floor(cost);
+        }
+
+        // Update Button labels and states based on current cash availability
+        function updateUpgradesUI() {
+            const qualityCost = getUpgradeCost(qualityLevel);
+            const qualityBtn = document.getElementById('upgrade-quality-btn');
+            qualityBtn.innerText = `Photo Quality: Lvl ${qualityLevel} ($${qualityCost})`;
+            qualityBtn.disabled = currentMoney < qualityCost;
+
+            const sizeCost = getUpgradeCost(sizeLevel);
+            const sizeBtn = document.getElementById('upgrade-size-btn');
+            sizeBtn.innerText = `Size Increase: Lvl ${sizeLevel} ($${sizeCost})`;
+            sizeBtn.disabled = currentMoney < sizeCost;
+        }
+
+        // Handle upgrade purchase transactions
+        function buyUpgrade(type) {
+            if (type === 'quality') {
+                const cost = getUpgradeCost(qualityLevel);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    qualityLevel++;
+                }
+            } else if (type === 'size') {
+                const cost = getUpgradeCost(sizeLevel);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    sizeLevel++;
+                }
+            }
+            moneyCounter.innerText = currentMoney + '$';
+            updateUpgradesUI();
+            saveGameProgress();
+        }
 
         // --- Progress Saving & Loading Logic ---
         function loadGameProgress() {
@@ -478,10 +564,21 @@
                 if (savedCollection !== null) {
                     discoveredFishIds = JSON.parse(savedCollection);
                 }
+
+                const savedQuality = localStorage.getItem('fish_game_quality_lvl');
+                if (savedQuality !== null) {
+                    qualityLevel = parseInt(savedQuality, 10);
+                }
+
+                const savedSize = localStorage.getItem('fish_game_size_lvl');
+                if (savedSize !== null) {
+                    sizeLevel = parseInt(savedSize, 10);
+                }
             } catch (e) {
                 console.error("Could not load local save data:", e);
             }
             moneyCounter.innerText = currentMoney + '$';
+            updateUpgradesUI();
             rebuildGalleryUI();
         }
 
@@ -489,6 +586,8 @@
             try {
                 localStorage.setItem('fish_game_money', currentMoney);
                 localStorage.setItem('fish_game_collection', JSON.stringify(discoveredFishIds));
+                localStorage.setItem('fish_game_quality_lvl', qualityLevel);
+                localStorage.setItem('fish_game_size_lvl', sizeLevel);
             } catch (e) {
                 console.error("Could not write local save data:", e);
             }
@@ -497,11 +596,14 @@
         // Reset Progress logic execution
         function resetGameProgress(e) {
             if(e) e.stopPropagation();
-            if (confirm("Are you sure you want to reset your progress? This clears your collection log and balance!")) {
+            if (confirm("Are you sure you want to reset your progress? This clears your collection log, upgrades and balance!")) {
                 currentMoney = 0;
                 discoveredFishIds = [];
+                qualityLevel = 0;
+                sizeLevel = 0;
                 saveGameProgress();
                 moneyCounter.innerText = '0$';
+                updateUpgradesUI();
                 rebuildGalleryUI();
             }
         }
@@ -652,8 +754,9 @@
             // Get data archetype from database
             const fishData = getRandomFishTemplate();
 
-            // 15% chance to roll a "Giant Variant" (2x bigger size, 2x worth value multiplier)
-            const isGiantVariant = Math.random() < 0.15;
+            // Baseline 15% chance + size level bonus increases the chance slightly (1% per level up)
+            const giantSpawnChance = 0.15 + (sizeLevel * 0.01);
+            const isGiantVariant = Math.random() < giantSpawnChance;
             const sizeMultiplier = isGiantVariant ? 2.0 : 1.0;
             const finalWidth = fishData.baseWidth * sizeMultiplier;
             const finalHeight = fishData.baseHeight * sizeMultiplier;
@@ -837,7 +940,23 @@
                 if (!(fRect.right < viewRect.left || fRect.left > viewRect.right || 
                       fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
                     
-                    earnings += fish.value;
+                    let fishWorth = fish.value;
+
+                    // Calculate penalty scaling based on your explicit zoom out positions
+                    // min=0.2, max=1.5. range size = 1.3
+                    if (zoomValue === 0.2) { 
+                        // If user is precisely at absolute max zoom out
+                        fishWorth = fishWorth * 0.5;
+                    } else if (zoomValue < 0.2 + (1.3 * 0.25)) { 
+                        // Slider ranges from 0.2 (max out) to 1.5 (max in). 
+                        // Being "above 3 quarters zoom out" means value is within bottom 25% of the range (< 0.525)
+                        fishWorth = fishWorth * 0.75;
+                    }
+
+                    // Apply Photo Quality Upgrade Multipliers (1.1x per level)
+                    fishWorth = fishWorth * Math.pow(1.1, qualityLevel);
+                    
+                    earnings += Math.round(fishWorth);
                     
                     // Unlock the card if it wasn't discovered before
                     if (!discoveredFishIds.includes(fish.id)) {
@@ -871,36 +990,36 @@
                     pCtx.restore();
                 }
             });
-            pCtx.restore();
 
+            // 3. Process Balance Changes 
             currentMoney += earnings;
             moneyCounter.innerText = currentMoney + '$';
-            
-            // Commit status to engine save state
+            updateUpgradesUI();
             saveGameProgress();
 
-            // 3. Zoom UP and center camera frame
-            setTimeout(() => {
-                cameraContainer.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                cameraContainer.style.width = photoSize + 'px';
-                cameraContainer.style.height = photoSize + 'px';
-                cameraContainer.style.left = '50%';
-                cameraContainer.style.top = '50%';
-
-                moneyPopup.innerText = '+$' + earnings;
-                moneyPopup.style.left = '50%';
-                moneyPopup.style.top = 'calc(50% - ' + (photoSize / 2 + 15) + 'px)';
+            // 4. Trigger popups graphics UI updates
+            if (earnings > 0) {
+                moneyPopup.innerText = "+$" + earnings;
+                moneyPopup.style.left = mouseX + 'px';
+                moneyPopup.style.top = (mouseY - 80) + 'px';
                 moneyPopup.style.opacity = '1';
-            }, 100);
+            }
 
-            // 4. Return to handling state after 2.2 seconds
+            // 5. Expand Viewfinder to show photo card presentation effect
+            cameraContainer.style.transition = 'left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            cameraContainer.style.width = photoSize + 'px';
+            cameraContainer.style.height = photoSize + 'px';
+            cameraContainer.style.left = (window.innerWidth / 2) + 'px';
+            cameraContainer.style.top = (window.innerHeight / 2) + 'px';
+
             setTimeout(() => {
-                cameraContainer.style.transition = 'all 0.4s ease-in-out';
-                isTakingPhoto = false;
-                
                 moneyPopup.style.opacity = '0';
                 
+                cameraContainer.style.transition = 'left 0.4s ease-in, top 0.4s ease-in, width 0.4s ease-in, height 0.4s ease-in';
+                isTakingPhoto = false;
+                
                 if (isHolding) {
+                    cameraContainer.style.transition = 'none';
                     cameraContainer.style.width = normalSize + 'px';
                     cameraContainer.style.height = normalSize + 'px';
                     cameraContainer.style.left = mouseX + 'px';
@@ -908,11 +1027,11 @@
                 } else {
                     sendToRestingPosition();
                 }
-            }, 2200);
+            }, 1800);
         }
 
-        // Initialize progress loading routines upon screen entry 
-        window.addEventListener('DOMContentLoaded', loadGameProgress);
+        // Initialize progress state on bootstrap configuration lifecycle
+        loadGameProgress();
     </script>
 </body>
 </html>
