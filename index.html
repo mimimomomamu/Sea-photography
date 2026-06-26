@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>taking photos of fish yay</title>
+    <title>Fish photographing</title>
     <style>
         * {
             box-sizing: border-box;
@@ -22,23 +22,49 @@
             position: relative;
         }
         
-        /* Instructions UI */
-        .instruction {
+        /* UI Control Layer */
+        .ui-container {
             position: absolute;
             top: 20px;
             width: 100%;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             pointer-events: none;
+            z-index: 10;
+        }
+        .instruction {
+            text-align: center;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             font-size: 22px;
             font-weight: 600;
-            z-index: 10;
         }
         .instruction span {
             display: block;
             font-size: 16px;
             opacity: 0.8;
             margin-top: 5px;
+        }
+        
+        /* Slider controls container */
+        .controls {
+            margin-top: 15px;
+            pointer-events: auto; 
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .controls label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .controls input[type="range"] {
+            cursor: pointer;
+            accent-color: #ffffff;
         }
 
         /* Squash and Stretch CSS Animation for active swimming */
@@ -69,8 +95,8 @@
         /* Camera Frame Container */
         #camera-container {
             position: absolute;
-            width: 250px; 
-            height: 250px;
+            width: 340px; 
+            height: 340px;
             pointer-events: none;
             transform: translate(-50%, -50%);
             z-index: 1000;
@@ -94,7 +120,7 @@
             z-index: 2;
         }
 
-        /* The Viewfinder/Hole where the captured photo shows up */
+        /* The Viewfinder/Hole where live rendering happens */
         #viewfinder {
             width: 65%; 
             height: 65%;
@@ -105,11 +131,11 @@
             background: transparent;
         }
 
-        /* Canvas inside the viewfinder holding the crisp frame */
+        /* Live Preview & Photo Capture Canvas combination layer */
         #photo-canvas {
             width: 100%;
             height: 100%;
-            display: none;
+            display: block; 
         }
 
         /* Flash overlay effect */
@@ -129,8 +155,16 @@
 <body>
 
     <div id="flash"></div>
-    <div class="instruction">
-      
+    <div class="ui-container">
+        <div class="instruction">
+           
+            <span></span>
+        </div>
+        <div class="controls" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+            <label for="zoomSlider"> Zoom Out</label>
+            <input type="range" id="zoomSlider" min="0.4" max="1.5" step="0.05" value="1.2">
+            <label for="zoomSlider">Zoom In</label>
+        </div>
     </div>
 
     <!-- Camera Container -->
@@ -145,14 +179,16 @@
         const cameraContainer = document.getElementById('camera-container');
         const photoCanvas = document.getElementById('photo-canvas');
         const flash = document.getElementById('flash');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const pCtx = photoCanvas.getContext('2d');
         
         let isHolding = false;
         let isTakingPhoto = false;
         let mouseX = 0;
         let mouseY = 0;
 
-        const normalSize = 250;
-        const photoSize = 450; 
+        const normalSize = 340; 
+        const photoSize = 520;  
 
         let sardinesList = [];
 
@@ -228,7 +264,7 @@
             img.style.animationDelay = (Math.random() * -0.7) + 's';
             container.appendChild(img);
             
-            const topPos = Math.random() * (window.innerHeight - 200) + 50;
+            const topPos = Math.random() * (window.innerHeight - 150) + 20;
             container.style.top = topPos + 'px';
 
             let startX, targetX, speed;
@@ -284,6 +320,77 @@
         setTimeout(spawnSardine, 1000);
         requestAnimationFrame(updateSardines);
 
+        // --- Live Viewfinder Viewport Loop ---
+        function drawViewfinderFrame() {
+            if (isTakingPhoto) {
+                requestAnimationFrame(drawViewfinderFrame);
+                return;
+            }
+
+            const viewRect = document.getElementById('viewfinder').getBoundingClientRect();
+            const scaleFactor = 4;
+            
+            photoCanvas.width = viewRect.width * scaleFactor;
+            photoCanvas.height = viewRect.height * scaleFactor;
+            
+            pCtx.save();
+            pCtx.scale(scaleFactor, scaleFactor);
+            pCtx.imageSmoothingEnabled = true;
+            pCtx.imageSmoothingQuality = 'high';
+            
+            pCtx.fillStyle = '#a0c4ff';
+            pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
+            
+            const zoomValue = parseFloat(zoomSlider.value);
+            
+            sardinesList.forEach(fish => {
+                const fRect = fish.element.getBoundingClientRect();
+                const imgRect = fish.imgElement.getBoundingClientRect();
+                
+                if (!(fRect.right < viewRect.left || fRect.left > viewRect.right || 
+                      fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
+                    
+                    const relX = fRect.left - viewRect.left;
+                    const relY = fRect.top - viewRect.top;
+                    
+                    pCtx.save();
+                    pCtx.translate(viewRect.width / 2, viewRect.height / 2);
+                    pCtx.scale(zoomValue, zoomValue);
+                    
+                    const fishCenterX = relX + fRect.width / 2;
+                    const fishCenterY = relY + fRect.height / 2;
+                    const offsetX = fishCenterX - viewRect.width / 2;
+                    const offsetY = fishCenterY - viewRect.height / 2;
+                    
+                    pCtx.translate(offsetX, offsetY);
+                    
+                    if (fish.direction === 1) {
+                        pCtx.scale(-1, 1);
+                    } else {
+                        pCtx.scale(1, 1);
+                    }
+                    
+                    // Added live animation wobble variables
+                    const liveScaleX = imgRect.width / fish.width;
+                    const liveScaleY = imgRect.height / fish.height;
+                    pCtx.scale(liveScaleX, liveScaleY);
+                    
+                    /* FIX: Added the matching x2 vertical stretch override (scale 1.0, 2.0)
+                       directly into the live viewfinder context layer loop. Now the live view matches the final photo!
+                    */
+                    pCtx.scale(1.0, 2.0);
+                    
+                    pCtx.drawImage(fish.imgElement, -fish.width / 2, -fish.height / 2, fish.width, fish.height);
+                    pCtx.restore();
+                }
+            });
+            
+            pCtx.restore();
+            requestAnimationFrame(drawViewfinderFrame);
+        }
+        
+        requestAnimationFrame(drawViewfinderFrame);
+
         // --- Camera Picture Taking Operation ---
         function takePicture() {
             if (isTakingPhoto) return;
@@ -297,23 +404,20 @@
                 flash.style.opacity = '0';
             }, 50);
 
-            // 2. Capture Viewfinder Area with HD Upscaling
+            // 2. Capture a frozen instance of what the viewfinder sees
             const viewRect = document.getElementById('viewfinder').getBoundingClientRect();
-            const pCtx = photoCanvas.getContext('2d');
+            const zoomValue = parseFloat(zoomSlider.value);
             
-            const scaleFactor = 4;
-            photoCanvas.width = viewRect.width * scaleFactor;
-            photoCanvas.height = viewRect.height * scaleFactor;
-            
-            pCtx.scale(scaleFactor, scaleFactor);
-            pCtx.imageSmoothingEnabled = true;
-            pCtx.imageSmoothingQuality = 'high';
-            
+            photoCanvas.width = viewRect.width * 4;
+            photoCanvas.height = viewRect.height * 4;
+            pCtx.save();
+            pCtx.scale(4, 4);
             pCtx.fillStyle = '#a0c4ff';
             pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
             
             sardinesList.forEach(fish => {
                 const fRect = fish.element.getBoundingClientRect();
+                const imgRect = fish.imgElement.getBoundingClientRect();
                 
                 if (!(fRect.right < viewRect.left || fRect.left > viewRect.right || 
                       fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
@@ -322,7 +426,12 @@
                     const relY = fRect.top - viewRect.top;
                     
                     pCtx.save();
-                    pCtx.translate(relX + fRect.width / 2, relY + fRect.height / 2);
+                    pCtx.translate(viewRect.width / 2, viewRect.height / 2);
+                    pCtx.scale(zoomValue, zoomValue);
+                    
+                    const offsetX = (relX + fRect.width / 2) - viewRect.width / 2;
+                    const offsetY = (relY + fRect.height / 2) - viewRect.height / 2;
+                    pCtx.translate(offsetX, offsetY);
                     
                     if (fish.direction === 1) {
                         pCtx.scale(-1, 1);
@@ -330,22 +439,21 @@
                         pCtx.scale(1, 1);
                     }
                     
-                    /* Forced Upward Stretch Fix:
-                       We explicitly scale the canvas transform context vertically when rendering the photo canvas image layer.
-                       Applying a 1.3x multiplier on the Y axis manually forces the captured photograph output 
-                       to remain visibly tall/stretched upwards, counteracting the asset flattening bug!
-                    */
-                    pCtx.scale(1.0, 2);
+                    // Maintain natural live wobble trace when freezing frame
+                    const liveScaleX = imgRect.width / fish.width;
+                    const liveScaleY = imgRect.height / fish.height;
+                    pCtx.scale(liveScaleX, liveScaleY);
+                    
+                    // Fixed Photo Output Override Multiplier (Stretched upward by x2)
+                    pCtx.scale(1.0, 2.0);
                     
                     pCtx.drawImage(fish.imgElement, -fish.width / 2, -fish.height / 2, fish.width, fish.height);
-                    
                     pCtx.restore();
                 }
             });
+            pCtx.restore();
 
-            photoCanvas.style.display = 'block';
-
-            // 3. Zoom up and center camera frame
+            // 3. Zoom UP and center camera frame
             setTimeout(() => {
                 cameraContainer.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 cameraContainer.style.width = photoSize + 'px';
@@ -357,8 +465,6 @@
             // 4. Return to handling state after 2.2 seconds
             setTimeout(() => {
                 cameraContainer.style.transition = 'all 0.4s ease-in-out';
-                photoCanvas.style.display = 'none'; 
-                
                 isTakingPhoto = false;
                 
                 if (isHolding) {
