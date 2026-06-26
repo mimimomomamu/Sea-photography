@@ -30,15 +30,18 @@
             font-size: 24px;
             font-weight: 600;
             opacity: 0.8;
+            margin-bottom: 100px; /* Shift text slightly up so it doesn't clash with the camera resting at the bottom */
         }
         #fish-camera {
             position: absolute;
-            width: 150px; /* Pretty big */
+            width: 220px; /* Made it slightly bigger (from 150px to 220px) */
             height: auto;
-            display: none;
             pointer-events: none; /* Crucial so it doesn't block mouse events */
-            transform: translate(-50%, -50%); /* Center the image exactly on the cursor */
+            transform: translate(-50%, -50%); /* Center the image on its coordinates */
             z-index: 1000;
+            
+            /* CSS Transition for smooth sliding animation */
+            transition: left 0.3s ease-out, top 0.3s ease-out;
         }
     </style>
 </head>
@@ -49,29 +52,59 @@
 
     <script>
         const fishCamera = document.getElementById('fish-camera');
+        let isHolding = false;
+
+        // Function to move the camera to its resting position (bottom-middle of the screen)
+        function sendToRestingPosition() {
+            const restX = window.innerWidth / 2;
+            const restY = window.innerHeight - 110; // Positioned near the bottom, adjusted for its size (220px / 2)
+            fishCamera.style.left = restX + 'px';
+            fishCamera.style.top = restY + 'px';
+        }
+
+        // Initialize at resting position when the page loads
+        sendToRestingPosition();
+
+        // Handle window resizing so it stays centered at the bottom
+        window.addEventListener('resize', () => {
+            if (!isHolding) {
+                sendToRestingPosition();
+            }
+        });
 
         window.addEventListener('mousedown', (e) => {
             if (e.button === 0) { // Left mouse button
+                isHolding = true;
+                // Temporarily disable transition for snappy tracking while dragging
+                fishCamera.style.transition = 'left 0.3s ease-out, top 0.3s ease-out';
                 updatePosition(e);
-                fishCamera.style.display = 'block';
             }
         });
 
         window.addEventListener('mousemove', (e) => {
-            if (fishCamera.style.display === 'block') {
+            if (isHolding) {
+                // Remove the transition while holding so it perfectly sticks to the cursor movement
+                fishCamera.style.transition = 'none';
                 updatePosition(e);
             }
         });
 
         window.addEventListener('mouseup', (e) => {
-            if (e.button === 0) {
-                fishCamera.style.display = 'none';
+            if (e.button === 0 && isHolding) {
+                isHolding = false;
+                // Re-enable transition for the smooth slide back down
+                fishCamera.style.transition = 'left 0.4s ease-out, top 0.4s ease-out';
+                sendToRestingPosition();
             }
         });
 
-        // Hide it if the mouse leaves the window while holding down
+        // If the mouse leaves the browser window, release the hold
         window.addEventListener('mouseleave', () => {
-            fishCamera.style.display = 'none';
+            if (isHolding) {
+                isHolding = false;
+                fishCamera.style.transition = 'left 0.4s ease-out, top 0.4s ease-out';
+                sendToRestingPosition();
+            }
         });
 
         function updatePosition(e) {
