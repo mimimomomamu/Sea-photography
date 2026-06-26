@@ -229,16 +229,21 @@
             object-fit: contain;
         }
 
-        /* Upgrades Container on Bottom Left side */
+        /* Upgrades Container on Bottom Left side rearranged into columns */
         #upgrades-container {
             position: absolute;
             bottom: 25px;
             left: 25px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 12px;
             z-index: 1100;
             pointer-events: auto;
+        }
+        .upgrade-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         .upgrade-btn {
             background: #ffd700;
@@ -431,8 +436,14 @@
     </div>
 
     <div id="upgrades-container" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
-        <button id="upgrade-quality-btn" class="upgrade-btn" onclick="buyUpgrade('quality')">Photo Quality: Lvl 0 ($200)</button>
-        <button id="upgrade-size-btn" class="upgrade-btn" onclick="buyUpgrade('size')">Size Increase: Lvl 0 ($200)</button>
+        <div class="upgrade-column">
+            <button id="upgrade-quality-btn" class="upgrade-btn" onclick="buyUpgrade('quality')">Photo Quality: Lvl 0 ($200)</button>
+            <button id="upgrade-size-btn" class="upgrade-btn" onclick="buyUpgrade('size')">Size Increase: Lvl 0 ($200)</button>
+        </div>
+        <div class="upgrade-column">
+            <button id="upgrade-spawn-btn" class="upgrade-btn" onclick="buyUpgrade('spawn')">Spawn Rate: Lvl 0 ($200)</button>
+            <button id="upgrade-rarity-btn" class="upgrade-btn" onclick="buyUpgrade('rarity')">Rarity Luck: Lvl 0 ($200)</button>
+        </div>
     </div>
 
     <div id="gallery-btn" onclick="toggleGallery(true)" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
@@ -477,7 +488,7 @@
                 baseHeight: 55,
                 minSpeed: 1.4,
                 maxSpeed: 2.2,
-                rarity: 15,
+                rarity: 13,
                 vStretch: 2.0
             },
             {
@@ -490,7 +501,7 @@
                 baseHeight: 250,
                 minSpeed: .5,
                 maxSpeed: 1.5,
-                rarity: 10,
+                rarity: 8,
                 vStretch: 1.0
             },
             {
@@ -503,7 +514,7 @@
                 baseHeight: 165,
                 minSpeed: 2,
                 maxSpeed: 4,
-                rarity: 5,
+                rarity: 3.5,
                 vStretch: 2.0
             },
             {
@@ -516,7 +527,7 @@
                 baseHeight: 90,
                 minSpeed: 1,
                 maxSpeed: 2,
-                rarity: 20,
+                rarity: 15,
                 vStretch: 2.0
             },
             {
@@ -529,7 +540,7 @@
                 baseHeight: 90,
                 minSpeed: 1.5,
                 maxSpeed: 2.5,
-                rarity: 0.3,
+                rarity: 0.2,
                 vStretch: 2.0
             },
             {
@@ -537,12 +548,12 @@
                 name: "Whale shark",
                 description: "a giant fish, you should photograph it multiple times.",
                 imageSrc: "whale.png", 
-                value: 65,
+                value: 200,
                 baseWidth: 1000,
                 baseHeight: 500,
                 minSpeed: 1,
                 maxSpeed: 1,
-                rarity: 1,
+                rarity: 0.5,
                 vStretch: 2.0
              },
              {
@@ -550,12 +561,12 @@
                 name: "marlin",
                 description: "a very fast fish that is worth quite a lot",
                 imageSrc: "marlin.png", 
-                value: 250,
+                value: 350,
                 baseWidth: 420,
                 baseHeight: 210,
                 minSpeed: 4,
                 maxSpeed: 6.5,
-                rarity: 2.5,
+                rarity: 2,
                 vStretch: 2.0
             }
         ];
@@ -582,6 +593,8 @@
         // Upgrade Track Levels
         let qualityLevel = 0;
         let sizeLevel = 0;
+        let spawnLevel = 0;
+        let rarityLevel = 0;
 
         const normalSize = 340; 
         const photoSize = 520;  
@@ -609,6 +622,16 @@
             const sizeBtn = document.getElementById('upgrade-size-btn');
             sizeBtn.innerText = `Size Increase: Lvl ${sizeLevel} ($${sizeCost})`;
             sizeBtn.disabled = currentMoney < sizeCost;
+
+            const spawnCost = getUpgradeCost(spawnLevel);
+            const spawnBtn = document.getElementById('upgrade-spawn-btn');
+            spawnBtn.innerText = `Spawn Rate: Lvl ${spawnLevel} ($${spawnCost})`;
+            spawnBtn.disabled = currentMoney < spawnCost;
+
+            const rarityCost = getUpgradeCost(rarityLevel);
+            const rarityBtn = document.getElementById('upgrade-rarity-btn');
+            rarityBtn.innerText = `Rarity Luck: Lvl ${rarityLevel} ($${rarityCost})`;
+            rarityBtn.disabled = currentMoney < rarityCost;
         }
 
         // Handle upgrade purchase transactions
@@ -624,6 +647,18 @@
                 if (currentMoney >= cost) {
                     currentMoney -= cost;
                     sizeLevel++;
+                }
+            } else if (type === 'spawn') {
+                const cost = getUpgradeCost(spawnLevel);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    spawnLevel++;
+                }
+            } else if (type === 'rarity') {
+                const cost = getUpgradeCost(rarityLevel);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    rarityLevel++;
                 }
             }
             moneyCounter.innerText = currentMoney + '$';
@@ -653,6 +688,16 @@
                 if (savedSize !== null) {
                     sizeLevel = parseInt(savedSize, 10);
                 }
+
+                const savedSpawn = localStorage.getItem('fish_game_spawn_lvl');
+                if (savedSpawn !== null) {
+                    spawnLevel = parseInt(savedSpawn, 10);
+                }
+
+                const savedRarity = localStorage.getItem('fish_game_rarity_lvl');
+                if (savedRarity !== null) {
+                    rarityLevel = parseInt(savedRarity, 10);
+                }
             } catch (e) {
                 console.error("Could not load local save data:", e);
             }
@@ -667,6 +712,8 @@
                 localStorage.setItem('fish_game_collection', JSON.stringify(discoveredFishIds));
                 localStorage.setItem('fish_game_quality_lvl', qualityLevel);
                 localStorage.setItem('fish_game_size_lvl', sizeLevel);
+                localStorage.setItem('fish_game_spawn_lvl', spawnLevel);
+                localStorage.setItem('fish_game_rarity_lvl', rarityLevel);
             } catch (e) {
                 console.error("Could not write local save data:", e);
             }
@@ -680,6 +727,8 @@
                 discoveredFishIds = [];
                 qualityLevel = 0;
                 sizeLevel = 0;
+                spawnLevel = 0;
+                rarityLevel = 0;
                 saveGameProgress();
                 moneyCounter.innerText = '0$';
                 updateUpgradesUI();
@@ -818,14 +867,36 @@
 
         // Helper function to pick a fish template based on configured rarity pool weights
         function getRandomFishTemplate() {
-            const totalRarity = FISH_DATABASE.reduce((sum, current) => sum + current.rarity, 0);
+            // Adjust weights dynamically based on Rarity Luck Level
+            // Each luck level slightly lowers common weight and raises rare weights
+            const dynamicDatabase = FISH_DATABASE.map(fish => {
+                let adjustedRarity = fish.rarity;
+                if (rarityLevel > 0) {
+                    if (fish.id === 'sardine') {
+                        // Slowly reduce common fish weight
+                        adjustedRarity = Math.max(20, fish.rarity - (rarityLevel * 2));
+                    } else if (fish.id === 'Golden_sardine') {
+                        // Tiny boost to ultra rare gold fish (+0.05 per lvl)
+                        adjustedRarity = fish.rarity + (rarityLevel * 0.05);
+                    } else if (fish.id === 'Whale_shark' || fish.id === 'Marlin' || fish.id === 'Mahi_mahi') {
+                        // Decent boost to high tier fish (+0.2 per lvl)
+                        adjustedRarity = fish.rarity + (rarityLevel * 0.2);
+                    } else {
+                        // Gentle boost to low mid-tier fish (+0.4 per lvl)
+                        adjustedRarity = fish.rarity + (rarityLevel * 0.4);
+                    }
+                }
+                return { ...fish, currentWeight: adjustedRarity };
+            });
+
+            const totalRarity = dynamicDatabase.reduce((sum, current) => sum + current.currentWeight, 0);
             let randomRoll = Math.random() * totalRarity;
             
-            for (let i = 0; i < FISH_DATABASE.length; i++) {
-                if (randomRoll < FISH_DATABASE[i].rarity) {
+            for (let i = 0; i < dynamicDatabase.length; i++) {
+                if (randomRoll < dynamicDatabase[i].currentWeight) {
                     return FISH_DATABASE[i];
                 }
-                randomRoll -= FISH_DATABASE[i].rarity;
+                randomRoll -= dynamicDatabase[i].currentWeight;
             }
             return FISH_DATABASE[0];
         }
@@ -931,7 +1002,11 @@
                 sardinesList.push(sardineObj);
             }
 
-            const nextSpawnDelay = Math.random() * 7000 + 1750;
+            // Handles spawn speed dynamically based on Spawn Rate upgrades
+            let nextSpawnDelay = Math.random() * 3500 + 800;
+            const spawnMultiplier = Math.pow(0.9, spawnLevel);
+            nextSpawnDelay = nextSpawnDelay * spawnMultiplier;
+
             setTimeout(spawnSardine, nextSpawnDelay);
         }
 
