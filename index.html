@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fish photographing</title>
     <style>
+        /* Import a fallback retro pixel font from Google Fonts just in case */
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            /* Force crisp, sharp, non-blurred rendering for pixel-art styles */
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
         body {
             background-color: #a0c4ff; /* Medium light blue */
@@ -17,7 +23,8 @@
             overflow: hidden;
             cursor: default;
             user-select: none;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Prioritize your local Scratch Pixel font, fallback to generic pixel and monospace fonts */
+            font-family: 'Scratch Pixel', 'VT323', Monaco, Courier, monospace;
             color: #ffffff;
             position: relative;
         }
@@ -27,19 +34,43 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            text-shadow: 2px 2px 0px #000000;
             z-index: 100;
+        }
+
+        /* Reset Progress Button in Top Right */
+        #reset-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff3b30;
+            color: white;
+            border: 4px solid #000000;
+            border-radius: 0px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 1100;
+            pointer-events: auto;
+        }
+        #reset-btn:hover {
+            background: #d32f2f;
+        }
+        #reset-btn:active {
+            transform: translate(2px, 2px);
         }
 
         /* Money popup above the camera */
         #money-popup {
             position: absolute;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             color: #ffd700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+            text-shadow: 2px 2px 0px #000000;
             pointer-events: none;
             z-index: 2000;
             opacity: 0;
@@ -60,32 +91,29 @@
         }
         .instruction {
             text-align: center;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            font-size: 22px;
-            font-weight: 600;
+            text-shadow: 2px 2px 0px #000000;
+            font-size: 24px;
         }
         .instruction span {
             display: block;
-            font-size: 16px;
+            font-size: 18px;
             opacity: 0.8;
             margin-top: 5px;
         }
         
-        /* Slider controls container */
+        /* Slider controls container with pixel theme */
         .controls {
             margin-top: 15px;
             pointer-events: auto; 
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 20px;
-            border-radius: 20px;
+            background: #222222;
+            border: 4px solid #000000; /* Sharp black border */
+            padding: 8px 16px;
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .controls label {
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 16px;
         }
         .controls input[type="range"] {
             cursor: pointer;
@@ -101,11 +129,9 @@
             100% { transform: scale(1, 1); }
         }
 
-        /* Sardine Container - x2 bigger */
+        /* Fish Container */
         .sardine-container {
             position: absolute;
-            width: 180px;
-            height: 90px;
             pointer-events: none;
             z-index: 5;
         }
@@ -149,7 +175,10 @@
         #viewfinder {
             width: 65%; 
             height: 65%;
-            border-radius: 10px;
+            margin-top: 15px;      /* Shift down */
+            margin-left: -12px;    /* Shift left */
+            border-radius: 0px; 
+            border: 4px solid transparent; /* Invisible frame border */
             overflow: hidden;
             position: relative;
             z-index: 1;
@@ -175,11 +204,173 @@
             pointer-events: none;
             z-index: 2000;
         }
+
+        /* Enlarged Gallery Button in Bottom Right */
+        #gallery-btn {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            width: 110px; 
+            height: 110px;
+            cursor: pointer;
+            z-index: 1100;
+            pointer-events: auto;
+            transition: transform 0.1s ease;
+        }
+        #gallery-btn:hover {
+            transform: scale(1.05);
+        }
+        #gallery-btn:active {
+            transform: scale(0.95);
+        }
+        #gallery-btn-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* RETRO PIXEL ART SCROLLABLE COLLECTION PANEL */
+        #gallery-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 85%;
+            max-width: 650px;
+            height: 75%;
+            background: #111e36; /* Fully Opaque Dark Navy background */
+            border: 6px solid #000000; /* Heavy Sharp Black Outline */
+            border-radius: 0px; /* 100% Sharp Corners */
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            z-index: 1500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #gallery-panel.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        #gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #000000; /* Sharp black divider line */
+            padding-bottom: 12px;
+        }
+        #gallery-header h2 {
+            font-size: 32px;
+            letter-spacing: 1px;
+            color: #ffd700; /* Gold heading */
+            text-shadow: 2px 2px 0px #000000;
+        }
+        #gallery-close-btn {
+            background: #ff5f56;
+            color: white;
+            border: 4px solid #000000; /* Sharp Black Outline */
+            border-radius: 0px; /* Sharp Edges */
+            padding: 6px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        #gallery-close-btn:hover {
+            background: #ff3b30;
+        }
+        #gallery-close-btn:active {
+            transform: translate(2px, 2px);
+        }
+        #gallery-content {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding-right: 8px;
+        }
+        /* Sharp Pixelated Custom scrollbar for collection panel */
+        #gallery-content::-webkit-scrollbar {
+            width: 12px;
+        }
+        #gallery-content::-webkit-scrollbar-track {
+            background: #09101d;
+            border-left: 4px solid #000000;
+        }
+        #gallery-content::-webkit-scrollbar-thumb {
+            background: #ffffff;
+            border: 4px solid #000000;
+            border-radius: 0px;
+        }
+        #gallery-content::-webkit-scrollbar-thumb:hover {
+            background: #cccccc;
+        }
+        
+        /* Redesigned Sharp Retro Fish Record Card Layout */
+        .gallery-item {
+            background: #192c4d; /* Fully opaque layout container */
+            border: 4px solid #000000; /* Sharp Black Outline */
+            border-radius: 0px; /* Completely Sharp Edges */
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .gallery-item-img-wrapper {
+            width: 100px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0c1626;
+            border: 4px solid #000000; /* Sharp Black Inner Frame Outline */
+            border-radius: 0px; /* Sharp Edges */
+            padding: 5px;
+        }
+        .gallery-item-img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .gallery-item-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .gallery-item-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        .gallery-item-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000000;
+        }
+        .gallery-item-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4cd964; /* Vibrant green for retro reward values */
+            text-shadow: 2px 2px 0px #000000;
+        }
+        .gallery-item-desc {
+            font-size: 16px;
+            color: #b0c4de;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
 
     <div id="money-counter">0$</div>
+    <button id="reset-btn" onclick="resetGameProgress(event)" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">Reset Progress</button>
+    
     <div id="money-popup">+$0</div>
     <div id="flash"></div>
     <div class="ui-container">
@@ -201,25 +392,175 @@
         </div>
     </div>
 
+    <!-- Gallery Trigger Button -->
+    <div id="gallery-btn" onclick="toggleGallery(true)" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <img id="gallery-btn-img" src="gallery.png" alt="Gallery">
+    </div>
+
+    <!-- Gallery Overlay Panel -->
+    <div id="gallery-panel" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <div id="gallery-header">
+            <h2>Fish Collection</h2>
+            <button id="gallery-close-btn" onclick="toggleGallery(false)">Close</button>
+        </div>
+        <div id="gallery-content">
+            <!-- Discovered fish records go here -->
+        </div>
+    </div>
+
     <script>
+        // =========================================================================
+        // EASILY EDITABLE & COPIABLE FISH LIST REGISTER
+        // =========================================================================
+        // REMOVED GIANT SARDINE TYPE
+        const FISH_DATABASE = [
+            {
+                id: "sardine",
+                name: "Sardine",
+                description: "regular fishy",
+                imageSrc: "sardine.png",
+                value: 15,
+                baseWidth: 180,
+                baseHeight: 90,
+                minSpeed: 0.8,
+                maxSpeed: 1.6,
+                rarity: 0.90 
+            },
+            {
+                id: "Mola_mola",
+                name: "Mola mola",
+                description: "a very fat stupid fish",
+                imageSrc: "mola.png", 
+                value: 150,
+                baseWidth: 250,
+                baseHeight: 250,
+                minSpeed: .5,
+                maxSpeed: 1.5,
+                rarity: 0.10 
+            }
+        ];
+
         const cameraContainer = document.getElementById('camera-container');
         const photoCanvas = document.getElementById('photo-canvas');
         const flash = document.getElementById('flash');
         const zoomSlider = document.getElementById('zoomSlider');
         const moneyCounter = document.getElementById('money-counter');
         const moneyPopup = document.getElementById('money-popup');
+        const galleryPanel = document.getElementById('gallery-panel');
+        const galleryContent = document.getElementById('gallery-content');
         const pCtx = photoCanvas.getContext('2d');
         
         let isHolding = false;
         let isTakingPhoto = false;
         let mouseX = 0;
         let mouseY = 0;
+
+        // Progress variables saved locally
         let currentMoney = 0;
+        let discoveredFishIds = []; 
 
         const normalSize = 340; 
         const photoSize = 520;  
 
         let sardinesList = [];
+
+        // --- Progress Saving & Loading Logic ---
+        function loadGameProgress() {
+            try {
+                const savedMoney = localStorage.getItem('fish_game_money');
+                if (savedMoney !== null) {
+                    currentMoney = parseInt(savedMoney, 10);
+                }
+                
+                const savedCollection = localStorage.getItem('fish_game_collection');
+                if (savedCollection !== null) {
+                    discoveredFishIds = JSON.parse(savedCollection);
+                }
+            } catch (e) {
+                console.error("Could not load local save data:", e);
+            }
+            moneyCounter.innerText = currentMoney + '$';
+            rebuildGalleryUI();
+        }
+
+        function saveGameProgress() {
+            try {
+                localStorage.setItem('fish_game_money', currentMoney);
+                localStorage.setItem('fish_game_collection', JSON.stringify(discoveredFishIds));
+            } catch (e) {
+                console.error("Could not write local save data:", e);
+            }
+        }
+
+        // Reset Progress logic execution
+        function resetGameProgress(e) {
+            if(e) e.stopPropagation();
+            if (confirm("Are you sure you want to reset your progress? This clears your collection log and balance!")) {
+                currentMoney = 0;
+                discoveredFishIds = [];
+                saveGameProgress();
+                moneyCounter.innerText = '0$';
+                rebuildGalleryUI();
+            }
+        }
+
+        function rebuildGalleryUI() {
+            // Clear current list content
+            galleryContent.innerHTML = '';
+
+            // Render details only for fish existing inside the discovered identifiers collection map
+            FISH_DATABASE.forEach(fish => {
+                if (discoveredFishIds.includes(fish.id)) {
+                    const item = document.createElement('div');
+                    item.classList.add('gallery-item');
+
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.classList.add('gallery-item-img-wrapper');
+
+                    const img = document.createElement('img');
+                    img.src = fish.imageSrc;
+                    imgWrapper.appendChild(img);
+
+                    const details = document.createElement('div');
+                    details.classList.add('gallery-item-details');
+
+                    const titleRow = document.createElement('div');
+                    titleRow.classList.add('gallery-item-title-row');
+
+                    const nameSpan = document.createElement('div');
+                    nameSpan.classList.add('gallery-item-name');
+                    nameSpan.innerText = fish.name;
+
+                    const valueSpan = document.createElement('div');
+                    valueSpan.classList.add('gallery-item-value');
+                    valueSpan.innerText = fish.value + '$';
+
+                    titleRow.appendChild(nameSpan);
+                    titleRow.appendChild(valueSpan);
+
+                    const descDiv = document.createElement('div');
+                    descDiv.classList.add('gallery-item-desc');
+                    descDiv.innerText = fish.description;
+
+                    details.appendChild(titleRow);
+                    details.appendChild(descDiv);
+
+                    item.appendChild(imgWrapper);
+                    item.appendChild(details);
+                    galleryContent.appendChild(item);
+                }
+            });
+
+            if (galleryContent.innerHTML === '') {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.padding = '40px 10px';
+                emptyMsg.style.color = '#b0c4de';
+                emptyMsg.style.fontSize = '18px';
+                emptyMsg.innerText = "No entries logged. Photograph wild fish to unlock cards!";
+                galleryContent.appendChild(emptyMsg);
+            }
+        }
 
         function sendToRestingPosition() {
             if (isTakingPhoto) return;
@@ -279,34 +620,73 @@
             if (e.button === 1) e.preventDefault();
         });
 
+        function toggleGallery(show) {
+            if (show) {
+                rebuildGalleryUI();
+                galleryPanel.classList.add('active');
+            } else {
+                galleryPanel.classList.remove('active');
+            }
+        }
+
+        // Helper function to pick a fish template based on configured rarity pool weights
+        function getRandomFishTemplate() {
+            const totalRarity = FISH_DATABASE.reduce((sum, current) => sum + current.rarity, 0);
+            let randomRoll = Math.random() * totalRarity;
+            
+            for (let i = 0; i < FISH_DATABASE.length; i++) {
+                if (randomRoll < FISH_DATABASE[i].rarity) {
+                    return FISH_DATABASE[i];
+                }
+                randomRoll -= FISH_DATABASE[i].rarity;
+            }
+            return FISH_DATABASE[0];
+        }
+
         // --- Sardine Spawning & Logic Engine ---
         function spawnSardine() {
             const side = Math.random() < 0.5 ? 'left' : 'right';
             
+            // Get data archetype from database
+            const fishData = getRandomFishTemplate();
+
+            // 15% chance to roll a "Giant Variant" (2x bigger size, 2x worth value multiplier)
+            const isGiantVariant = Math.random() < 0.15;
+            const sizeMultiplier = isGiantVariant ? 2.0 : 1.0;
+            const finalWidth = fishData.baseWidth * sizeMultiplier;
+            const finalHeight = fishData.baseHeight * sizeMultiplier;
+            const finalValue = fishData.value * (isGiantVariant ? 2 : 1);
+
             const container = document.createElement('div');
             container.classList.add('sardine-container');
+            container.style.width = finalWidth + 'px';
+            container.style.height = finalHeight + 'px';
             
             const img = document.createElement('img');
-            img.src = 'sardine.png';
+            img.src = fishData.imageSrc;
             img.classList.add('sardine-img');
             
             img.style.animationDelay = (Math.random() * -0.7) + 's';
             container.appendChild(img);
             
-            const topPos = Math.random() * (window.innerHeight - 150) + 20;
+            const topPos = Math.random() * (window.innerHeight - finalHeight - 60) + 20;
             container.style.top = topPos + 'px';
 
             let startX, targetX, speed;
-            speed = Math.random() * 0.8 + 0.8; 
+            // Giant variants swim slightly slower dynamically
+            const variationSpeedMod = isGiantVariant ? 0.6 : 1.0;
+            speed = (Math.random() * (fishData.maxSpeed - fishData.minSpeed) + fishData.minSpeed) * variationSpeedMod; 
+
+            const padX = finalWidth + 40;
 
             if (side === 'left') {
-                startX = -220; 
-                targetX = window.innerWidth + 220;
+                startX = -padX; 
+                targetX = window.innerWidth + padX;
                 container.style.left = startX + 'px';
                 container.style.transform = 'scaleX(-1)'; 
             } else {
-                startX = window.innerWidth + 220;
-                targetX = -220;
+                startX = window.innerWidth + padX;
+                targetX = -padX;
                 container.style.left = startX + 'px';
                 container.style.transform = 'scaleX(1)';
             }
@@ -314,6 +694,7 @@
             document.body.appendChild(container);
 
             const sardineObj = {
+                id: fishData.id,
                 element: container,
                 imgElement: img,
                 x: startX,
@@ -321,8 +702,12 @@
                 targetX: targetX,
                 speed: speed,
                 direction: side === 'left' ? 1 : -1,
-                width: 180,  
-                height: 90
+                width: finalWidth,  
+                height: finalHeight,
+                value: finalValue,
+                name: fishData.name,
+                description: fishData.description,
+                sizeMultiplier: sizeMultiplier
             };
 
             sardinesList.push(sardineObj);
@@ -364,8 +749,7 @@
             
             pCtx.save();
             pCtx.scale(scaleFactor, scaleFactor);
-            pCtx.imageSmoothingEnabled = true;
-            pCtx.imageSmoothingQuality = 'high';
+            pCtx.imageSmoothingEnabled = false; // Pixel art filtering rendering switch
             
             pCtx.fillStyle = '#a0c4ff';
             pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
@@ -399,14 +783,11 @@
                         pCtx.scale(1, 1);
                     }
                     
-                    // Added live animation wobble variables
                     const liveScaleX = imgRect.width / fish.width;
                     const liveScaleY = imgRect.height / fish.height;
                     pCtx.scale(liveScaleX, liveScaleY);
                     
-                    /* FIX: Added the matching x2 vertical stretch override (scale 1.0, 2.0)
-                       directly into the live viewfinder context layer loop. Now the live view matches the final photo!
-                    */
+                    // Adjust y-scaling based on size variations
                     pCtx.scale(1.0, 2.0);
                     
                     pCtx.drawImage(fish.imgElement, -fish.width / 2, -fish.height / 2, fish.width, fish.height);
@@ -433,7 +814,7 @@
                 flash.style.opacity = '0';
             }, 50);
 
-            // 2. Capture a frozen instance of what the viewfinder sees & count visible sardines
+            // 2. Capture freeze viewport frame
             const viewRect = document.getElementById('viewfinder').getBoundingClientRect();
             const zoomValue = parseFloat(zoomSlider.value);
             
@@ -444,7 +825,7 @@
             pCtx.fillStyle = '#a0c4ff';
             pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
             
-            let sardinesInPhoto = 0;
+            let earnings = 0;
 
             sardinesList.forEach(fish => {
                 const fRect = fish.element.getBoundingClientRect();
@@ -453,7 +834,13 @@
                 if (!(fRect.right < viewRect.left || fRect.left > viewRect.right || 
                       fRect.bottom < viewRect.top || fRect.top > viewRect.bottom)) {
                     
-                    sardinesInPhoto++;
+                    earnings += fish.value;
+                    
+                    // Unlock the card if it wasn't discovered before
+                    if (!discoveredFishIds.includes(fish.id)) {
+                        discoveredFishIds.push(fish.id);
+                    }
+
                     const relX = fRect.left - viewRect.left;
                     const relY = fRect.top - viewRect.top;
                     
@@ -471,12 +858,10 @@
                         pCtx.scale(1, 1);
                     }
                     
-                    // Maintain natural live wobble trace when freezing frame
                     const liveScaleX = imgRect.width / fish.width;
                     const liveScaleY = imgRect.height / fish.height;
                     pCtx.scale(liveScaleX, liveScaleY);
                     
-                    // Fixed Photo Output Override Multiplier (Stretched upward by x2)
                     pCtx.scale(1.0, 2.0);
                     
                     pCtx.drawImage(fish.imgElement, -fish.width / 2, -fish.height / 2, fish.width, fish.height);
@@ -485,10 +870,11 @@
             });
             pCtx.restore();
 
-            // Calculate earnings
-            const earnings = sardinesInPhoto * 15;
             currentMoney += earnings;
             moneyCounter.innerText = currentMoney + '$';
+            
+            // Commit status to engine save state
+            saveGameProgress();
 
             // 3. Zoom UP and center camera frame
             setTimeout(() => {
@@ -498,7 +884,6 @@
                 cameraContainer.style.left = '50%';
                 cameraContainer.style.top = '50%';
 
-                // Show total money got from photo above the camera lens area
                 moneyPopup.innerText = '+$' + earnings;
                 moneyPopup.style.left = '50%';
                 moneyPopup.style.top = 'calc(50% - ' + (photoSize / 2 + 15) + 'px)';
@@ -510,7 +895,6 @@
                 cameraContainer.style.transition = 'all 0.4s ease-in-out';
                 isTakingPhoto = false;
                 
-                // Hide popup
                 moneyPopup.style.opacity = '0';
                 
                 if (isHolding) {
@@ -523,6 +907,9 @@
                 }
             }, 2200);
         }
+
+        // Initialize progress loading routines upon screen entry 
+        window.addEventListener('DOMContentLoaded', loadGameProgress);
     </script>
 </body>
 </html>
