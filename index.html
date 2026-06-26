@@ -468,6 +468,19 @@
                 vStretch: 2.0
             },
             {
+                id: "anchovy",
+                name: "Anchovy",
+                description: "these fish like being togheter.",
+                imageSrc: "anchovy.png",
+                value: 5,
+                baseWidth: 110,
+                baseHeight: 55,
+                minSpeed: 1.4,
+                maxSpeed: 2.2,
+                rarity: 3.5,
+                vStretch: 2.0
+            },
+            {
                 id: "Mola_mola",
                 name: "Mola mola",
                 description: "a very fat stupid fish",
@@ -631,6 +644,10 @@
                 moneyCounter.innerText = '0$';
                 updateUpgradesUI();
                 rebuildGalleryUI();
+                
+                // Clear all active fish elements from the viewport
+                sardinesList.forEach(fish => fish.element.remove());
+                sardinesList = [];
             }
         }
 
@@ -780,69 +797,98 @@
             // Get data archetype from database
             const fishData = getRandomFishTemplate();
 
-            // Baseline 15% chance + size level bonus increases the chance slightly (1% per level up)
-            const giantSpawnChance = 0.15 + (sizeLevel * 0.01);
-            const isGiantVariant = Math.random() < giantSpawnChance;
-            const sizeMultiplier = isGiantVariant ? 2.0 : 1.0;
-            const finalWidth = fishData.baseWidth * sizeMultiplier;
-            const finalHeight = fishData.baseHeight * sizeMultiplier;
-            const finalValue = fishData.value * (isGiantVariant ? 2 : 1);
-
-            const container = document.createElement('div');
-            container.classList.add('sardine-container');
-            container.style.width = finalWidth + 'px';
-            container.style.height = finalHeight + 'px';
-            
-            const img = document.createElement('img');
-            img.src = fishData.imageSrc;
-            img.classList.add('sardine-img');
-            
-            img.style.animationDelay = (Math.random() * -0.7) + 's';
-            container.appendChild(img);
-            
-            const topPos = Math.random() * (window.innerHeight - finalHeight - 60) + 20;
-            container.style.top = topPos + 'px';
-
-            let startX, targetX, speed;
-            // Giant variants swim slightly slower dynamically
-            const variationSpeedMod = isGiantVariant ? 0.6 : 1.0;
-            speed = (Math.random() * (fishData.maxSpeed - fishData.minSpeed) + fishData.minSpeed) * variationSpeedMod; 
-
-            const padX = finalWidth + 40;
-
-            if (side === 'left') {
-                startX = -padX; 
-                targetX = window.innerWidth + padX;
-                container.style.left = startX + 'px';
-                container.style.transform = 'scaleX(-1)'; 
-            } else {
-                startX = window.innerWidth + padX;
-                targetX = -padX;
-                container.style.left = startX + 'px';
-                container.style.transform = 'scaleX(1)';
+            // Handle school size logic for Anchovies (3 to 10), otherwise single spawn
+            let schoolSize = 1;
+            if (fishData.id === 'anchovy') {
+                schoolSize = Math.floor(Math.random() * 8) + 3;
             }
 
-            document.body.appendChild(container);
+            // Group attributes so school entities swim tightly together
+            const schoolBaseY = Math.random() * (window.innerHeight - (fishData.baseHeight * 2) - 60) + 20;
+            const schoolBaseSpeed = Math.random() * (fishData.maxSpeed - fishData.minSpeed) + fishData.minSpeed;
 
-            const sardineObj = {
-                id: fishData.id,
-                element: container,
-                imgElement: img,
-                x: startX,
-                y: topPos,
-                targetX: targetX,
-                speed: speed,
-                direction: side === 'left' ? 1 : -1,
-                width: finalWidth,  
-                height: finalHeight,
-                value: finalValue,
-                name: fishData.name,
-                description: fishData.description,
-                sizeMultiplier: sizeMultiplier,
-                vStretch: fishData.vStretch !== undefined ? fishData.vStretch : 2.0
-            };
+            for (let s = 0; s < schoolSize; s++) {
+                // Baseline 15% chance + size level bonus increases the chance slightly (1% per level up)
+                const giantSpawnChance = 0.15 + (sizeLevel * 0.01);
+                const isGiantVariant = Math.random() < giantSpawnChance;
+                const sizeMultiplier = isGiantVariant ? 2.0 : 1.0;
+                const finalWidth = fishData.baseWidth * sizeMultiplier;
+                const finalHeight = fishData.baseHeight * sizeMultiplier;
+                const finalValue = fishData.value * (isGiantVariant ? 2 : 1);
 
-            sardinesList.push(sardineObj);
+                const container = document.createElement('div');
+                container.classList.add('sardine-container');
+                container.style.width = finalWidth + 'px';
+                container.style.height = finalHeight + 'px';
+                
+                const img = document.createElement('img');
+                img.src = fishData.imageSrc;
+                img.classList.add('sardine-img');
+                
+                img.style.animationDelay = (Math.random() * -0.7) + 's';
+                container.appendChild(img);
+                
+                // Group the Y position tightly if they belong to a school
+                let topPos;
+                if (fishData.id === 'anchovy') {
+                    topPos = schoolBaseY + (Math.random() * 40 - 20);
+                } else {
+                    topPos = Math.random() * (window.innerHeight - finalHeight - 60) + 20;
+                }
+                container.style.top = topPos + 'px';
+
+                let startX, targetX, speed;
+                // Giant variants swim slightly slower dynamically
+                const variationSpeedMod = isGiantVariant ? 0.6 : 1.0;
+                
+                if (fishData.id === 'anchovy') {
+                    speed = (schoolBaseSpeed + (Math.random() * 0.2 - 0.1)) * variationSpeedMod;
+                } else {
+                    speed = (Math.random() * (fishData.maxSpeed - fishData.minSpeed) + fishData.minSpeed) * variationSpeedMod; 
+                }
+
+                const padX = finalWidth + 40;
+
+                // Stagger starting offsets horizontally to show tight grouping
+                let horizontalOffset = 0;
+                if (fishData.id === 'anchovy') {
+                    horizontalOffset = s * (finalWidth * 0.45) + (Math.random() * 15);
+                }
+
+                if (side === 'left') {
+                    startX = -padX - horizontalOffset; 
+                    targetX = window.innerWidth + padX + horizontalOffset;
+                    container.style.left = startX + 'px';
+                    container.style.transform = 'scaleX(-1)'; 
+                } else {
+                    startX = window.innerWidth + padX + horizontalOffset;
+                    targetX = -padX - horizontalOffset;
+                    container.style.left = startX + 'px';
+                    container.style.transform = 'scaleX(1)';
+                }
+
+                document.body.appendChild(container);
+
+                const sardineObj = {
+                    id: fishData.id,
+                    element: container,
+                    imgElement: img,
+                    x: startX,
+                    y: topPos,
+                    targetX: targetX,
+                    speed: speed,
+                    direction: side === 'left' ? 1 : -1,
+                    width: finalWidth,  
+                    height: finalHeight,
+                    value: finalValue,
+                    name: fishData.name,
+                    description: fishData.description,
+                    sizeMultiplier: sizeMultiplier,
+                    vStretch: fishData.vStretch !== undefined ? fishData.vStretch : 2.0
+                };
+
+                sardinesList.push(sardineObj);
+            }
 
             const nextSpawnDelay = Math.random() * 7000 + 1750;
             setTimeout(spawnSardine, nextSpawnDelay);
