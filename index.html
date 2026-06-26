@@ -587,6 +587,7 @@
         const photoSize = 520;  
 
         let sardinesList = [];
+        let lastUpdateTime = performance.now();
 
         // Calculate dynamic upgrade costs matching rule: 200, +1.2x first time, +1.2x everytime
         function getUpgradeCost(level) {
@@ -934,10 +935,19 @@
             setTimeout(spawnSardine, nextSpawnDelay);
         }
 
-        function updateSardines() {
+        function updateSardines(timestamp) {
+            // Calculate actual time passed relative to standard 60fps (16.66ms per frame)
+            let delta = (timestamp - lastUpdateTime) / 16.666; 
+            lastUpdateTime = timestamp;
+
+            // Capping the maximum step. If the page was minimized/frozen, 
+            // force it to treat the return as just 1 normal frame instead of trying to catch up all at once.
+            if (delta > 3) delta = 1;
+
             for (let i = sardinesList.length - 1; i >= 0; i--) {
                 const fish = sardinesList[i];
-                fish.x += fish.speed * fish.direction;
+                // Multiply movement by delta to ensure steady, uniform swimming speeds
+                fish.x += (fish.speed * fish.direction) * delta;
                 fish.element.style.left = fish.x + 'px';
 
                 if ((fish.direction === 1 && fish.x > fish.targetX) || 
