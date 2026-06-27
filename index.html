@@ -705,7 +705,7 @@
             {
                 id: "coral_reef",
                 name: "Coral Reef",
-                backgroundColor: "#a0c4ff", // Set to sand color from image
+                backgroundColor: "#a99fe3", // Set to sand color from image
                 backgroundImage: "coral.png",
                 costToUnlock: 15000,
                 fish: [
@@ -984,7 +984,7 @@
             
             if (zone.id === "coral_reef" && hideCoralImageBackground) {
                 document.body.style.backgroundImage = "none";
-                document.body.style.backgroundColor = "#a0c4ff";
+                document.body.style.backgroundColor = "#a99fe3";
                 return;
             }
 
@@ -1425,12 +1425,12 @@
         // Map and render the area's background image mapping precisely to CSS' background-size: cover
         function drawBackground(ctx, viewRect, zoomValue, currentZone) {
             if (currentZone.id === "coral_reef" && hideCoralImageBackground) {
-                ctx.fillStyle = '#a0c4ff';
+                ctx.fillStyle = '#a99fe3';
                 ctx.fillRect(0, 0, viewRect.width, viewRect.height);
                 return;
             }
 
-            ctx.fillStyle = currentZone.backgroundColor || '#a0c4ff';
+            ctx.fillStyle = currentZone.backgroundColor || '#a99fe3';
             ctx.fillRect(0, 0, viewRect.width, viewRect.height);
 
             if (currentZone.backgroundImage && currentZone.backgroundImage !== "") {
