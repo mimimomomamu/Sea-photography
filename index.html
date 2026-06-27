@@ -984,7 +984,7 @@
             
             if (zone.id === "coral_reef" && hideCoralImageBackground) {
                 document.body.style.backgroundImage = "none";
-                document.body.style.backgroundColor = "#bdad6f";
+                document.body.style.backgroundColor = "#a0c4ff";
                 return;
             }
 
@@ -1425,7 +1425,7 @@
         // Map and render the area's background image mapping precisely to CSS' background-size: cover
         function drawBackground(ctx, viewRect, zoomValue, currentZone) {
             if (currentZone.id === "coral_reef" && hideCoralImageBackground) {
-                ctx.fillStyle = '#bdad6f';
+                ctx.fillStyle = '#a0c4ff';
                 ctx.fillRect(0, 0, viewRect.width, viewRect.height);
                 return;
             }
