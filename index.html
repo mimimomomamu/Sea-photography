@@ -911,8 +911,8 @@
 
             // Spawn Rate UI with Max Cap Check
             const spawnBtn = document.getElementById('upgrade-spawn-btn');
-            if (spawnLevel >= 15) {
-                spawnBtn.innerText = `Spawn Rate: Lvl 15 (MAX)`;
+            if (spawnLevel >= 10) {
+                spawnBtn.innerText = `Spawn Rate: Lvl 10 (MAX)`;
                 spawnBtn.disabled = true;
             } else {
                 const spawnCost = getUpgradeCost(spawnLevel + 12.5);
