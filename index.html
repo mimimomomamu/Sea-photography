@@ -1,235 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fish photographingg</title>
-    <style>
-        /* Import a fallback retro pixel font from Google Fonts just in case */
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            /* Force crisp, sharp, non-blurred rendering for pixel-art styles */
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
-        body {
-            background-color: #a0c4ff; /* Medium light blue */
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            cursor: default;
-            user-select: none;
-            /* Prioritize your local Scratch Pixel font, fallback to generic pixel and monospace fonts */
-            font-family: 'Scratch Pixel', 'VT323', Monaco, Courier, monospace;
-            color: #ffffff;
-            position: relative;
-        }
-        
-        /* Money counter styling in top left */
-        #money-counter {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 32px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0px #000000;
-            z-index: 100;
-        }
-
-        /* Reset Progress Button in Top Right */
-        #reset-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #ff3b30;
-            color: white;
-            border: 4px solid #000000;
-            border-radius: 0px;
-            padding: 6px 16px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: bold;
-            font-size: 18px;
-            z-index: 1100;
-            pointer-events: auto;
-        }
-        #reset-btn:hover {
-            background: #d32f2f;
-        }
-        #reset-btn:active {
-            transform: translate(2px, 2px);
-        }
-
-        /* Money popup above the camera */
-        #money-popup {
-            position: absolute;
-            font-size: 28px;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 2px 2px 0px #000000;
-            pointer-events: none;
-            z-index: 2000;
-            opacity: 0;
-            transform: translate(-50%, -100%);
-            transition: opacity 0.3s ease-out, top 0.3s ease-out;
-        }
-        
-        /* UI Control Layer */
-        .ui-container {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .instruction {
-            text-align: center;
-            text-shadow: 2px 2px 0px #000000;
-            font-size: 24px;
-        }
-        .instruction span {
-            display: block;
-            font-size: 18px;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-        
-        /* Slider controls container with pixel theme */
-        .controls {
-            margin-top: 15px;
-            pointer-events: auto; 
-            background: #222222;
-            border: 4px solid #000000; /* Sharp black border */
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .controls label {
-            font-size: 16px;
-        }
-        .controls input[type="range"] {
-            cursor: pointer;
-            accent-color: #ffffff;
-        }
-
-        /* Squash and Stretch CSS Animation for active swimming */
-        @keyframes swimWobble {
-            0% { transform: scale(1, 1); }
-            25% { transform: scale(1.08, 0.92); }
-            50% { transform: scale(1, 1); }
-            75% { transform: scale(0.92, 1.08); }
-            100% { transform: scale(1, 1); }
-        }
-
-        /* Fish Container */
-        .sardine-container {
-            position: absolute;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        .sardine-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            animation: swimWobble 0.7s infinite ease-in-out;
-        }
-
-        /* Camera Frame Container */
-        #camera-container {
-            position: absolute;
-            width: 340px; 
-            height: 340px;
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-                        top 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-                        width 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-                        height 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        /* The fishcamera image with a hole in it */
-        #fish-camera-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 2;
-        }
-
-        /* The Viewfinder/Hole where live rendering happens */
-        #viewfinder {
-            width: 65%; 
-            height: 65%;
-            margin-top: 15px;      /* Shift down */
-            margin-left: -12px;    /* Shift left */
-            border-radius: 0px; 
-            border: 4px solid transparent; /* Invisible frame border */
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-            background: transparent;
-        }
-
-        /* Live Preview & Photo Capture Canvas combination layer */
-        #photo-canvas {
-            width: 100%;
-            height: 100%;
-            display: block; 
-        }
-
-        /* Flash overlay effect */
-        #flash {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 2000;
-        }
-
-        /* Enlarged Gallery Button in Bottom Right */
-        #gallery-btn {
-            position: absolute;
-            bottom: 25px;
-            right: 25px;
-            width: 110px; 
-            height: 110px;
-            cursor: pointer;
-            z-index: 1100;
-            pointer-events: auto;
-            transition: transform 0.1s ease;
-        }
-        #gallery-btn:hover {
-            transform: scale(1.05);
-        }
-        #gallery-btn:active {
-            transform: scale(0.95);
-        }
-        #gallery-btn-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* Upgrades Container on Bottom Left side rearranged into columns */
         #upgrades-container {
             position: absolute;
             bottom: 25px;
@@ -413,7 +181,11 @@
 <body>
 
     <div id="money-counter">0$</div>
-    <button id="reset-btn" onclick="resetGameProgress(event)" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">Reset Progress</button>
+    
+    <div id="top-right-container" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <button id="reset-btn" class="admin-btn" onclick="resetGameProgress(event)">Reset All Progress</button>
+        <button id="reset-area-btn" class="admin-btn" onclick="resetAreaProgress(event)">Reset Area Progress</button>
+    </div>
     
     <div id="money-popup">+$0</div>
     <div id="flash"></div>
@@ -433,6 +205,16 @@
         <div id="viewfinder">
             <canvas id="photo-canvas"></canvas>
         </div>
+    </div>
+
+    <!-- Zone Selector widget with arrows situated to the right of the camera contextually -->
+    <div id="zone-selector-widget" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <div id="zone-title">Open Ocean</div>
+        <div class="zone-controls-row">
+            <button id="zone-prev-arrow" class="zone-arrow-btn" onclick="changeZone(-1)">&lt;</button>
+            <button id="zone-next-arrow" class="zone-arrow-btn" onclick="changeZone(1)">&gt;</button>
+        </div>
+        <div id="zone-lock-status"></div>
     </div>
 
     <div id="upgrades-container" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
@@ -456,120 +238,165 @@
             <button id="gallery-close-btn" onclick="toggleGallery(false)">Close</button>
         </div>
         <div id="gallery-content">
-            </div>
+        </div>
     </div>
 
     <script>
         // =========================================================================
-        // EASILY EDITABLE & COPIABLE FISH LIST REGISTER
+        // ZONE SPECIFIC CONFIGURABLE FISH LIST REGISTERS
         // =========================================================================
-        // REMOVED GIANT SARDINE TYPE
-        const FISH_DATABASE = [
+        const ZONES_DATABASE = [
             {
-                id: "sardine",
-                name: "Sardine",
-                description: "regular fishy",
-                imageSrc: "sardine.png",
-                value: 10,
-                baseWidth: 180,
-                baseHeight: 90,
-                minSpeed: 0.8,
-                maxSpeed: 1.6,
-                rarity: 80,
-                vStretch: 2.0
+                id: "open_ocean",
+                name: "Open Ocean",
+                backgroundColor: "#a0c4ff",
+                backgroundImage: "",
+                costToUnlock: 0,
+                fish: [
+                    {
+                        id: "sardine",
+                        name: "Sardine",
+                        description: "regular fishy",
+                        imageSrc: "sardine.png",
+                        value: 10,
+                        baseWidth: 180,
+                        baseHeight: 90,
+                        minSpeed: 0.8,
+                        maxSpeed: 1.6,
+                        rarity: 80,
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                    },
+                    {
+                        id: "anchovy",
+                        name: "Anchovy",
+                        description: "these fish like being togheter.",
+                        imageSrc: "anchovy.png",
+                        value: 5,
+                        baseWidth: 110,
+                        baseHeight: 55,
+                        minSpeed: 1.4,
+                        maxSpeed: 2.2,
+                        rarity: 13,
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                    },
+                    {
+                        id: "Mola_mola",
+                        name: "Mola mola",
+                        description: "a very fat stupid fish",
+                        imageSrc: "mola.png", 
+                        value: 90,
+                        baseWidth: 250,
+                        baseHeight: 250,
+                        minSpeed: .5,
+                        maxSpeed: 1.5,
+                        rarity: 8,
+                        vStretch: 1.0,
+                        isBottomDwelling: false
+                    },
+                    {
+                        id: "Mahi_mahi",
+                        name: "mahi mahi",
+                        description: "a coloful fast fish",
+                        imageSrc: "mahimahi.png", 
+                        value: 135,
+                        baseWidth: 330,
+                        baseHeight: 165,
+                        minSpeed: 2,
+                        maxSpeed: 4,
+                        rarity: 3.5,
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                    },
+                    {
+                        id: "Golden_sardine",
+                        name: "Golden sardine",
+                        description: "a very rare and expensive fish made out of gold",
+                        imageSrc: "golden.png", 
+                        value: 500,
+                        baseWidth: 180,
+                        baseHeight: 90,
+                        minSpeed: 1.5,
+                        maxSpeed: 2.5,
+                        rarity: 0.2,
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                    },
+                    {
+                        id: "Whale_shark",
+                        name: "Whale shark",
+                        description: "a giant fish, you should photograph it multiple times.",
+                        imageSrc: "whale.png", 
+                        value: 200,
+                        baseWidth: 1000,
+                        baseHeight: 500,
+                        minSpeed: 1,
+                        maxSpeed: 1,
+                        rarity: 0.5,
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                     },
+                     {
+                        id: "marlin",
+                        name: "marlin",
+                        description: "a very fast fish that is worth quite a lot",
+                        imageSrc: "marlin.png", 
+                        value: 350,
+                        baseWidth: 420,
+                        baseHeight: 210,
+                        minSpeed: 4,
+                        maxSpeed: 6.5,
+                        rarity: 2,
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                    }
+                ]
             },
             {
-                id: "anchovy",
-                name: "Anchovy",
-                description: "these fish like being togheter.",
-                imageSrc: "anchovy.png",
-                value: 5,
-                baseWidth: 110,
-                baseHeight: 55,
-                minSpeed: 1.4,
-                maxSpeed: 2.2,
-                rarity: 13,
-                vStretch: 2.0
-            },
-            {
-                id: "Mola_mola",
-                name: "Mola mola",
-                description: "a very fat stupid fish",
-                imageSrc: "mola.png", 
-                value: 90,
-                baseWidth: 250,
-                baseHeight: 250,
-                minSpeed: .5,
-                maxSpeed: 1.5,
-                rarity: 8,
-                vStretch: 1.0
-            },
-            {
-                id: "Mahi_mahi",
-                name: "mahi mahi",
-                description: "a coloful fast fish",
-                imageSrc: "mahimahi.png", 
-                value: 135,
-                baseWidth: 330,
-                baseHeight: 165,
-                minSpeed: 2,
-                maxSpeed: 4,
-                rarity: 3.5,
-                vStretch: 2.0
-            },
-            {
-                id: "Clownfish",
-                name: "Clownfish",
-                description: "a cute and colorful fish that loves anemones",
-                imageSrc: "clownfish.png", 
-                value: 35,
-                baseWidth: 180,
-                baseHeight: 90,
-                minSpeed: 1,
-                maxSpeed: 2,
-                rarity: 15,
-                vStretch: 2.0
-            },
-            {
-                id: "Golden_sardine",
-                name: "Golden sardine",
-                description: "a very rare and expensive fish made out of gold",
-                imageSrc: "golden.png", 
-                value: 500,
-                baseWidth: 180,
-                baseHeight: 90,
-                minSpeed: 1.5,
-                maxSpeed: 2.5,
-                rarity: 0.2,
-                vStretch: 2.0
-            },
-            {
-                id: "Whale_shark",
-                name: "Whale shark",
-                description: "a giant fish, you should photograph it multiple times.",
-                imageSrc: "whale.png", 
-                value: 200,
-                baseWidth: 1000,
-                baseHeight: 500,
-                minSpeed: 1,
-                maxSpeed: 1,
-                rarity: 0.5,
-                vStretch: 2.0
-             },
-             {
-                id: "Marlin",
-                name: "marlin",
-                description: "a very fast fish that is worth quite a lot",
-                imageSrc: "marlin.png", 
-                value: 350,
-                baseWidth: 420,
-                baseHeight: 210,
-                minSpeed: 4,
-                maxSpeed: 6.5,
-                rarity: 2,
-                vStretch: 2.0
+                id: "coral_reef",
+                name: "Coral Reef",
+                backgroundColor: "#bdad6f", // Set to sand color from image
+                backgroundImage: "coral.png",
+                costToUnlock: 15000,
+                fish: [
+                    {
+                        id: "Clownfish",
+                        name: "Clownfish",
+                        description: "a cute and colorful fish that loves anemones",
+                        imageSrc: "clownfish.png", 
+                        value: 35,
+                        baseWidth: 180,
+                        baseHeight: 90,
+                        minSpeed: 1,
+                        maxSpeed: 2,
+                        rarity: 100, // Sole inhabitant initially, 100% chance inside this pool
+                        vStretch: 2.0,
+                        isBottomDwelling: false
+                    }
+                ]
             }
         ];
+
+        // Cache the background images in memory so we can draw them onto the canvas viewfinder
+        const loadedBgImages = {};
+        ZONES_DATABASE.forEach(zone => {
+            if (zone.backgroundImage && zone.backgroundImage !== "") {
+                const img = new Image();
+                img.src = zone.backgroundImage;
+                loadedBgImages[zone.id] = img;
+            }
+        });
+
+        // Global master database flat array for matching up discovered collections view
+        const ALL_FISH_FLAT_REGISTRY = [];
+        ZONES_DATABASE.forEach(zone => {
+            zone.fish.forEach(f => {
+                if(!ALL_FISH_FLAT_REGISTRY.some(x => x.id === f.id)) {
+                    ALL_FISH_FLAT_REGISTRY.push(f);
+                }
+            });
+        });
 
         const cameraContainer = document.getElementById('camera-container');
         const photoCanvas = document.getElementById('photo-canvas');
@@ -589,18 +416,21 @@
         // Progress variables saved locally
         let currentMoney = 0;
         let discoveredFishIds = []; 
+        let unlockedZones = ["open_ocean"];
+        let currentZoneIndex = 0;
 
-        // Upgrade Track Levels
-        let qualityLevel = 0;
-        let sizeLevel = 0;
-        let spawnLevel = 0;
-        let rarityLevel = 0;
+        // Separate Area Stats Structure tracking upgrade levels and net area fish earnings
+        let zoneProgressMap = {
+            "open_ocean": { qualityLevel: 0, sizeLevel: 0, spawnLevel: 0, rarityLevel: 0, earnings: 0 },
+            "coral_reef": { qualityLevel: 0, sizeLevel: 0, spawnLevel: 0, rarityLevel: 0, earnings: 0 }
+        };
 
         const normalSize = 340; 
         const photoSize = 520;  
 
         let sardinesList = [];
         let lastUpdateTime = performance.now();
+        let activeSpawnTimeoutId = null;
 
         // Calculate dynamic upgrade costs matching rule: 200, +1.2x first time, +1.2x everytime
         function getUpgradeCost(level) {
@@ -611,86 +441,194 @@
             return Math.floor(cost);
         }
 
-        // Update Button labels and states based on current cash availability
+        function getCurrentZoneData() {
+            return ZONES_DATABASE[currentZoneIndex];
+        }
+
+        function getActiveLevels() {
+            const currentZoneId = getCurrentZoneData().id;
+            if(!zoneProgressMap[currentZoneId]) {
+                zoneProgressMap[currentZoneId] = { qualityLevel: 0, sizeLevel: 0, spawnLevel: 0, rarityLevel: 0, earnings: 0 };
+            }
+            return zoneProgressMap[currentZoneId];
+        }
+
+        // Update Button labels and states based on current cash availability and separated zone maps
         function updateUpgradesUI() {
-    const qualityCost = getUpgradeCost(qualityLevel);
-    const qualityBtn = document.getElementById('upgrade-quality-btn');
-    qualityBtn.innerText = `Photo Quality: Lvl ${qualityLevel} ($${qualityCost})`;
-    qualityBtn.disabled = currentMoney < qualityCost;
+            const activeStats = getActiveLevels();
+            const qualityLevel = activeStats.qualityLevel;
+            const sizeLevel = activeStats.sizeLevel;
+            const spawnLevel = activeStats.spawnLevel;
+            const rarityLevel = activeStats.rarityLevel;
 
-    // Size UI with Max Cap Check
-    const sizeBtn = document.getElementById('upgrade-size-btn');
-    if (sizeLevel >= 20) {
-        sizeBtn.innerText = `Size Increase: Lvl 20 (MAX)`;
-        sizeBtn.disabled = true;
-    } else {
-        const sizeCost = getUpgradeCost(sizeLevel + 4.4);
-        sizeBtn.innerText = `Size Increase: Lvl ${sizeLevel} ($${sizeCost})`;
-        sizeBtn.disabled = currentMoney < sizeCost;
-    }
+            const qualityCost = getUpgradeCost(qualityLevel);
+            const qualityBtn = document.getElementById('upgrade-quality-btn');
+            qualityBtn.innerText = `Photo Quality: Lvl ${qualityLevel} ($${qualityCost})`;
+            qualityBtn.disabled = currentMoney < qualityCost;
 
-    // Spawn Rate UI with Max Cap Check
-    const spawnBtn = document.getElementById('upgrade-spawn-btn');
-    if (spawnLevel >= 15) {
-        spawnBtn.innerText = `Spawn Rate: Lvl 15 (MAX)`;
-        spawnBtn.disabled = true;
-    } else {
-        const spawnCost = getUpgradeCost(spawnLevel + 12.5);
-        spawnBtn.innerText = `Spawn Rate: Lvl ${spawnLevel} ($${spawnCost})`;
-        spawnBtn.disabled = currentMoney < spawnCost;
-    }
+            // Size UI with Max Cap Check
+            const sizeBtn = document.getElementById('upgrade-size-btn');
+            if (sizeLevel >= 20) {
+                sizeBtn.innerText = `Size Increase: Lvl 20 (MAX)`;
+                sizeBtn.disabled = true;
+            } else {
+                const sizeCost = getUpgradeCost(sizeLevel + 4.4);
+                sizeBtn.innerText = `Size Increase: Lvl ${sizeLevel} ($${sizeCost})`;
+                sizeBtn.disabled = currentMoney < sizeCost;
+            }
 
-    // Rarity Luck UI with Max Cap Check
-    const rarityBtn = document.getElementById('upgrade-rarity-btn');
-    if (rarityLevel >= 10) {
-        rarityBtn.innerText = `Rarity Luck: Lvl 10 (MAX)`;
-        rarityBtn.disabled = true;
-    } else {
-        const rarityCost = getUpgradeCost(rarityLevel + 9.7);
-        rarityBtn.innerText = `Rarity Luck: Lvl ${rarityLevel} ($${rarityCost})`;
-        rarityBtn.disabled = currentMoney < rarityCost;
-    }
-}
+            // Spawn Rate UI with Max Cap Check
+            const spawnBtn = document.getElementById('upgrade-spawn-btn');
+            if (spawnLevel >= 15) {
+                spawnBtn.innerText = `Spawn Rate: Lvl 15 (MAX)`;
+                spawnBtn.disabled = true;
+            } else {
+                const spawnCost = getUpgradeCost(spawnLevel + 12.5);
+                spawnBtn.innerText = `Spawn Rate: Lvl ${spawnLevel} ($${spawnCost})`;
+                spawnBtn.disabled = currentMoney < spawnCost;
+            }
+
+            // Rarity Luck UI with Max Cap Check
+            const rarityBtn = document.getElementById('upgrade-rarity-btn');
+            if (rarityLevel >= 10) {
+                rarityBtn.innerText = `Rarity Luck: Lvl 10 (MAX)`;
+                rarityBtn.disabled = true;
+            } else {
+                const rarityCost = getUpgradeCost(rarityLevel + 9.7);
+                rarityBtn.innerText = `Rarity Luck: Lvl ${rarityLevel} ($${rarityCost})`;
+                rarityBtn.disabled = currentMoney < rarityCost;
+            }
+
+            // Render Zone Navigation elements dynamically
+            updateZoneWidgetUI();
+        }
+
+        function updateZoneWidgetUI() {
+            const currentZone = getCurrentZoneData();
+            document.getElementById('zone-title').innerText = currentZone.name;
+
+            // Prev Arrow visible/active state controls
+            const prevArrow = document.getElementById('zone-prev-arrow');
+            prevArrow.disabled = (currentZoneIndex === 0);
+            prevArrow.style.visibility = (currentZoneIndex === 0) ? "hidden" : "visible";
+
+            // Next Arrow visible/active state controls
+            const nextArrow = document.getElementById('zone-next-arrow');
+            nextArrow.disabled = (currentZoneIndex === ZONES_DATABASE.length - 1 && unlockedZones.includes(currentZone.id));
+            nextArrow.style.visibility = (currentZoneIndex === ZONES_DATABASE.length - 1) ? "hidden" : "visible";
+
+            const lockStatusDiv = document.getElementById('zone-lock-status');
+            
+            // Check if the next zone option is currently locked and evaluate buy triggers
+            if (currentZoneIndex < ZONES_DATABASE.length - 1) {
+                const nextZoneData = ZONES_DATABASE[currentZoneIndex + 1];
+                if (!unlockedZones.includes(nextZoneData.id)) {
+                    nextArrow.disabled = false; // keep it enabled so click can process unlock/buy transaction
+                    lockStatusDiv.innerText = `Buy Next: $${nextZoneData.costToUnlock}`;
+                } else {
+                    lockStatusDiv.innerText = "";
+                }
+            } else {
+                lockStatusDiv.innerText = "";
+            }
+        }
+
         // Handle upgrade purchase transactions
         function buyUpgrade(type) {
-    if (type === 'quality') {
-        const cost = getUpgradeCost(qualityLevel);
-        if (currentMoney >= cost) {
-            currentMoney -= cost;
-            qualityLevel++;
+            const activeStats = getActiveLevels();
+            if (type === 'quality') {
+                const cost = getUpgradeCost(activeStats.qualityLevel);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    activeStats.qualityLevel++;
+                }
+            } else if (type === 'size') {
+                if (activeStats.sizeLevel >= 20) return; 
+                const cost = getUpgradeCost(activeStats.sizeLevel + 4.4);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    activeStats.sizeLevel++;
+                }
+            } else if (type === 'spawn') {
+                if (activeStats.spawnLevel >= 15) return;
+                const cost = getUpgradeCost(activeStats.spawnLevel + 12.5);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    activeStats.spawnLevel++;
+                }
+            } else if (type === 'rarity') {
+                if (activeStats.rarityLevel >= 10) return;
+                const cost = getUpgradeCost(activeStats.rarityLevel + 9.7);
+                if (currentMoney >= cost) {
+                    currentMoney -= cost;
+                    activeStats.rarityLevel++;
+                }
+            }
+            moneyCounter.innerText = currentMoney + '$';
+            updateUpgradesUI();
+            saveGameProgress();
         }
-    } else if (type === 'size') {
-        // --- MAX LEVEL CAP: 30 ---
-        if (sizeLevel >= 20) return; 
-        
-        const cost = getUpgradeCost(sizeLevel);
-        if (currentMoney >= cost) {
-            currentMoney -= cost;
-            sizeLevel++;
-        }
-    } else if (type === 'spawn') {
-        // --- MAX LEVEL CAP: 20 ---
-        if (spawnLevel >= 15) return;
 
-        const cost = getUpgradeCost(spawnLevel);
-        if (currentMoney >= cost) {
-            currentMoney -= cost;
-            spawnLevel++;
-        }
-    } else if (type === 'rarity') {
-        // --- MAX LEVEL CAP: 20 ---
-        if (rarityLevel >= 10) return;
+        // Handles switching areas and handles buying transactions seamlessly
+        function changeZone(dir) {
+            let targetIdx = currentZoneIndex + dir;
+            if (targetIdx < 0 || targetIdx >= ZONES_DATABASE.length) return;
 
-        const cost = getUpgradeCost(rarityLevel);
-        if (currentMoney >= cost) {
-            currentMoney -= cost;
-            rarityLevel++;
+            const targetZone = ZONES_DATABASE[targetIdx];
+            
+            // Handle area purchasing logic
+            if (!unlockedZones.includes(targetZone.id)) {
+                if (currentMoney >= targetZone.costToUnlock) {
+                    if (confirm(`Would you like to unlock the new area "${targetZone.name}" for $${targetZone.costToUnlock}?`)) {
+                        currentMoney -= targetZone.costToUnlock;
+                        unlockedZones.push(targetZone.id);
+                        moneyCounter.innerText = currentMoney + '$';
+                    } else {
+                        return;
+                    }
+                } else {
+                    alert(`This area is locked! You need $${targetZone.costToUnlock} to purchase it.`);
+                    return;
+                }
+            }
+
+            // Clear active fish components completely from view before swapping backgrounds
+            clearAllActiveFishElements();
+
+            // Set current active pointer index
+            currentZoneIndex = targetIdx;
+
+            // Apply area visuals
+            applyZoneBackgroundVisuals();
+
+            // Render current stats context
+            updateUpgradesUI();
+            saveGameProgress();
+
+            // Reschedule the spawner sequence loops instantly
+            if (activeSpawnTimeoutId) clearTimeout(activeSpawnTimeoutId);
+            activeSpawnTimeoutId = setTimeout(spawnSardine, 600);
         }
-    }
-    moneyCounter.innerText = currentMoney + '$';
-    updateUpgradesUI();
-    saveGameProgress();
-}
+
+        function clearAllActiveFishElements() {
+            sardinesList.forEach(fish => {
+                if (fish.element && fish.element.parentNode) {
+                    fish.element.remove();
+                }
+            });
+            sardinesList = [];
+        }
+
+        function applyZoneBackgroundVisuals() {
+            const zone = getCurrentZoneData();
+            if (zone.backgroundImage && zone.backgroundImage !== "") {
+                document.body.style.backgroundImage = `url('${zone.backgroundImage}')`;
+                document.body.style.backgroundColor = "transparent";
+            } else {
+                document.body.style.backgroundImage = "none";
+                document.body.style.backgroundColor = zone.backgroundColor;
+            }
+        }
 
         // --- Progress Saving & Loading Logic ---
         function loadGameProgress() {
@@ -705,29 +643,28 @@
                     discoveredFishIds = JSON.parse(savedCollection);
                 }
 
-                const savedQuality = localStorage.getItem('fish_game_quality_lvl');
-                if (savedQuality !== null) {
-                    qualityLevel = parseInt(savedQuality, 10);
+                const savedUnlocked = localStorage.getItem('fish_game_unlocked_zones');
+                if (savedUnlocked !== null) {
+                    unlockedZones = JSON.parse(savedUnlocked);
                 }
 
-                const savedSize = localStorage.getItem('fish_game_size_lvl');
-                if (savedSize !== null) {
-                    sizeLevel = parseInt(savedSize, 10);
+                const savedZoneIdx = localStorage.getItem('fish_game_current_zone_idx');
+                if (savedZoneIdx !== null) {
+                    currentZoneIndex = parseInt(savedZoneIdx, 10);
+                    if(currentZoneIndex >= ZONES_DATABASE.length || currentZoneIndex < 0) {
+                        currentZoneIndex = 0;
+                    }
                 }
 
-                const savedSpawn = localStorage.getItem('fish_game_spawn_lvl');
-                if (savedSpawn !== null) {
-                    spawnLevel = parseInt(savedSpawn, 10);
-                }
-
-                const savedRarity = localStorage.getItem('fish_game_rarity_lvl');
-                if (savedRarity !== null) {
-                    rarityLevel = parseInt(savedRarity, 10);
+                const savedZoneMap = localStorage.getItem('fish_game_zone_map');
+                if (savedZoneMap !== null) {
+                    zoneProgressMap = JSON.parse(savedZoneMap);
                 }
             } catch (e) {
                 console.error("Could not load local save data:", e);
             }
             moneyCounter.innerText = currentMoney + '$';
+            applyZoneBackgroundVisuals();
             updateUpgradesUI();
             rebuildGalleryUI();
         }
@@ -736,33 +673,56 @@
             try {
                 localStorage.setItem('fish_game_money', currentMoney);
                 localStorage.setItem('fish_game_collection', JSON.stringify(discoveredFishIds));
-                localStorage.setItem('fish_game_quality_lvl', qualityLevel);
-                localStorage.setItem('fish_game_size_lvl', sizeLevel);
-                localStorage.setItem('fish_game_spawn_lvl', spawnLevel);
-                localStorage.setItem('fish_game_rarity_lvl', rarityLevel);
+                localStorage.setItem('fish_game_unlocked_zones', JSON.stringify(unlockedZones));
+                localStorage.setItem('fish_game_current_zone_idx', currentZoneIndex);
+                localStorage.setItem('fish_game_zone_map', JSON.stringify(zoneProgressMap));
             } catch (e) {
                 console.error("Could not write local save data:", e);
             }
         }
 
-        // Reset Progress logic execution
+        // Reset All Progress logic execution completely
         function resetGameProgress(e) {
             if(e) e.stopPropagation();
-            if (confirm("Are you sure you want to reset your progress? This clears your collection log, upgrades and balance!")) {
+            if (confirm("Are you sure you want to reset ALL your progress? This clears your whole collection log, all area upgrades and balances!")) {
                 currentMoney = 0;
                 discoveredFishIds = [];
-                qualityLevel = 0;
-                sizeLevel = 0;
-                spawnLevel = 0;
-                rarityLevel = 0;
+                unlockedZones = ["open_ocean"];
+                currentZoneIndex = 0;
+                zoneProgressMap = {
+                    "open_ocean": { qualityLevel: 0, sizeLevel: 0, spawnLevel: 0, rarityLevel: 0, earnings: 0 },
+                    "coral_reef": { qualityLevel: 0, sizeLevel: 0, spawnLevel: 0, rarityLevel: 0, earnings: 0 }
+                };
                 saveGameProgress();
                 moneyCounter.innerText = '0$';
+                applyZoneBackgroundVisuals();
                 updateUpgradesUI();
                 rebuildGalleryUI();
+                clearAllActiveFishElements();
+            }
+        }
+
+        // Reset Progress solely for the current selected area tracking metrics
+        function resetAreaProgress(e) {
+            if(e) e.stopPropagation();
+            const zone = getCurrentZoneData();
+            if (confirm(`Are you sure you want to reset upgrades and sub-earnings for the "${zone.name}" area?`)) {
+                const activeStats = getActiveLevels();
                 
-                // Clear all active fish elements from the viewport
-                sardinesList.forEach(fish => fish.element.remove());
-                sardinesList = [];
+                // Deduct only money earned inside this specific area boundary context if possible safely
+                currentMoney = Math.max(0, currentMoney - (activeStats.earnings || 0));
+                
+                // Reset levels to defaults
+                activeStats.qualityLevel = 0;
+                activeStats.sizeLevel = 0;
+                activeStats.spawnLevel = 0;
+                activeStats.rarityLevel = 0;
+                activeStats.earnings = 0;
+
+                saveGameProgress();
+                moneyCounter.innerText = currentMoney + '$';
+                updateUpgradesUI();
+                clearAllActiveFishElements();
             }
         }
 
@@ -771,7 +731,7 @@
             galleryContent.innerHTML = '';
 
             // Render details only for fish existing inside the discovered identifiers collection map
-            FISH_DATABASE.forEach(fish => {
+            ALL_FISH_FLAT_REGISTRY.forEach(fish => {
                 if (discoveredFishIds.includes(fish.id)) {
                     const item = document.createElement('div');
                     item.classList.add('gallery-item');
@@ -893,22 +853,21 @@
 
         // Helper function to pick a fish template based on configured rarity pool weights
         function getRandomFishTemplate() {
-            // Adjust weights dynamically based on Rarity Luck Level
-            // Each luck level slightly lowers common weight and raises rare weights
-            const dynamicDatabase = FISH_DATABASE.map(fish => {
+            const currentZone = getCurrentZoneData();
+            const activeStats = getActiveLevels();
+            const rarityLevel = activeStats.rarityLevel;
+
+            // Adjust weights dynamically based on Rarity Luck Level within active zone pool
+            const dynamicDatabase = currentZone.fish.map(fish => {
                 let adjustedRarity = fish.rarity;
                 if (rarityLevel > 0) {
                     if (fish.id === 'sardine') {
-                        // Slowly reduce common fish weight
                         adjustedRarity = Math.max(20, fish.rarity - (rarityLevel * 2));
                     } else if (fish.id === 'Golden_sardine') {
-                        // Tiny boost to ultra rare gold fish (+0.05 per lvl)
                         adjustedRarity = fish.rarity + (rarityLevel * 0.05);
-                    } else if (fish.id === 'Whale_shark' || fish.id === 'Marlin' || fish.id === 'Mahi_mahi') {
-                        // Decent boost to high tier fish (+0.2 per lvl)
+                    } else if (fish.id === 'Whale_shark' || fish.id === 'marlin' || fish.id === 'Mahi_mahi') {
                         adjustedRarity = fish.rarity + (rarityLevel * 0.2);
                     } else {
-                        // Gentle boost to low mid-tier fish (+0.4 per lvl)
                         adjustedRarity = fish.rarity + (rarityLevel * 0.4);
                     }
                 }
@@ -920,15 +879,20 @@
             
             for (let i = 0; i < dynamicDatabase.length; i++) {
                 if (randomRoll < dynamicDatabase[i].currentWeight) {
-                    return FISH_DATABASE[i];
+                    return currentZone.fish[i];
                 }
                 randomRoll -= dynamicDatabase[i].currentWeight;
             }
-            return FISH_DATABASE[0];
+            return currentZone.fish[0];
         }
 
         // --- Sardine Spawning & Logic Engine ---
         function spawnSardine() {
+            const currentZone = getCurrentZoneData();
+            const activeStats = getActiveLevels();
+            const sizeLevel = activeStats.sizeLevel;
+            const spawnLevel = activeStats.spawnLevel;
+
             const side = Math.random() < 0.5 ? 'left' : 'right';
             
             // Get data archetype from database
@@ -941,7 +905,19 @@
             }
 
             // Group attributes so school entities swim tightly together
-            const schoolBaseY = Math.random() * (window.innerHeight - (fishData.baseHeight * 2) - 60) + 20;
+            const upgradesRect = document.getElementById('upgrades-container').getBoundingClientRect();
+            const boundaryY = upgradesRect.top;
+
+            let schoolMinY, schoolMaxY;
+            if (fishData.isBottomDwelling) {
+                schoolMinY = boundaryY;
+                schoolMaxY = Math.max(boundaryY, window.innerHeight - (fishData.baseHeight * 2) - 20);
+            } else {
+                schoolMinY = 20;
+                schoolMaxY = Math.max(20, boundaryY - (fishData.baseHeight * 2) - 20);
+            }
+            
+            const schoolBaseY = Math.random() * (schoolMaxY - schoolMinY) + schoolMinY;
             const schoolBaseSpeed = Math.random() * (fishData.maxSpeed - fishData.minSpeed) + fishData.minSpeed;
 
             for (let s = 0; s < schoolSize; s++) {
@@ -965,12 +941,22 @@
                 img.style.animationDelay = (Math.random() * -0.7) + 's';
                 container.appendChild(img);
                 
+                let minY, maxY;
+                if (fishData.isBottomDwelling) {
+                    minY = boundaryY;
+                    maxY = Math.max(boundaryY, window.innerHeight - finalHeight - 20);
+                } else {
+                    minY = 20;
+                    maxY = Math.max(20, boundaryY - finalHeight - 20);
+                }
+
                 // Group the Y position tightly if they belong to a school
                 let topPos;
                 if (fishData.id === 'anchovy') {
                     topPos = schoolBaseY + (Math.random() * 40 - 20);
+                    topPos = Math.max(minY, Math.min(topPos, maxY));
                 } else {
-                    topPos = Math.random() * (window.innerHeight - finalHeight - 60) + 20;
+                    topPos = Math.random() * (maxY - minY) + minY;
                 }
                 container.style.top = topPos + 'px';
 
@@ -1033,7 +1019,7 @@
             const spawnMultiplier = Math.pow(0.9, spawnLevel);
             nextSpawnDelay = nextSpawnDelay * spawnMultiplier;
 
-            setTimeout(spawnSardine, nextSpawnDelay);
+            activeSpawnTimeoutId = setTimeout(spawnSardine, nextSpawnDelay);
         }
 
         function updateSardines(timestamp) {
@@ -1060,8 +1046,58 @@
             requestAnimationFrame(updateSardines);
         }
 
-        setTimeout(spawnSardine, 1000);
+        activeSpawnTimeoutId = setTimeout(spawnSardine, 1000);
         requestAnimationFrame(updateSardines);
+
+        // Map and render the area's background image mapping precisely to CSS' background-size: cover
+        function drawBackground(ctx, viewRect, zoomValue, currentZone) {
+            ctx.fillStyle = currentZone.backgroundColor || '#a0c4ff';
+            ctx.fillRect(0, 0, viewRect.width, viewRect.height);
+
+            if (currentZone.backgroundImage && currentZone.backgroundImage !== "") {
+                const bgImg = loadedBgImages[currentZone.id];
+                if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+                    const W = window.innerWidth;
+                    const H = window.innerHeight;
+                    const IW = bgImg.naturalWidth;
+                    const IH = bgImg.naturalHeight;
+                    const WR = W / H;
+                    const IR = IW / IH;
+                    
+                    let S, X_offset, Y_offset;
+                    // Emulate background-size: cover logic
+                    if (WR > IR) {
+                        S = W / IW;
+                        X_offset = 0;
+                        Y_offset = (H - IH * S) / 2;
+                    } else {
+                        S = H / IH;
+                        X_offset = (W - IW * S) / 2;
+                        Y_offset = 0;
+                    }
+
+                    ctx.save();
+                    
+                    // Move context to the true center of the Viewfinder Frame
+                    ctx.translate(viewRect.width / 2, viewRect.height / 2);
+                    // Apply camera zoom dynamically to the background art as well
+                    ctx.scale(zoomValue, zoomValue);
+                    
+                    // Find exactly where the top-left corner of the window aligns relative to the zoomed center of our camera
+                    const winLeftRelativeToCenter = -(viewRect.left + viewRect.width / 2);
+                    const winTopRelativeToCenter = -(viewRect.top + viewRect.height / 2);
+                    
+                    ctx.drawImage(
+                        bgImg,
+                        winLeftRelativeToCenter + X_offset,
+                        winTopRelativeToCenter + Y_offset,
+                        IW * S,
+                        IH * S
+                    );
+                    ctx.restore();
+                }
+            }
+        }
 
         // --- Live Viewfinder Viewport Loop ---
         function drawViewfinderFrame() {
@@ -1073,17 +1109,22 @@
             const viewRect = document.getElementById('viewfinder').getBoundingClientRect();
             const scaleFactor = 4;
             
-            photoCanvas.width = viewRect.width * scaleFactor;
-            photoCanvas.height = viewRect.height * scaleFactor;
+            const targetWidth = Math.floor(viewRect.width * scaleFactor);
+            const targetHeight = Math.floor(viewRect.height * scaleFactor);
+            if (photoCanvas.width !== targetWidth || photoCanvas.height !== targetHeight) {
+                photoCanvas.width = targetWidth;
+                photoCanvas.height = targetHeight;
+            }
             
             pCtx.save();
             pCtx.scale(scaleFactor, scaleFactor);
             pCtx.imageSmoothingEnabled = false; // Pixel art filtering rendering switch
             
-            pCtx.fillStyle = '#a0c4ff';
-            pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
-            
+            const currentZone = getCurrentZoneData();
             const zoomValue = parseFloat(zoomSlider.value);
+
+            // Draw Background correctly aligned to CSS background-size: cover
+            drawBackground(pCtx, viewRect, zoomValue, currentZone);
             
             sardinesList.forEach(fish => {
                 const fRect = fish.element.getBoundingClientRect();
@@ -1151,10 +1192,14 @@
             photoCanvas.height = viewRect.height * 4;
             pCtx.save();
             pCtx.scale(4, 4);
-            pCtx.fillStyle = '#a0c4ff';
-            pCtx.fillRect(0, 0, viewRect.width, viewRect.height);
+            
+            const currentZone = getCurrentZoneData();
+
+            // Draw captured mapped background correctly
+            drawBackground(pCtx, viewRect, zoomValue, currentZone);
             
             let earnings = 0;
+            const activeStats = getActiveLevels();
 
             sardinesList.forEach(fish => {
                 const fRect = fish.element.getBoundingClientRect();
@@ -1186,7 +1231,7 @@
                     }
 
                     // Apply Photo Quality Upgrade Multipliers (1.1x per level)
-                    fishWorth = fishWorth * Math.pow(1.1, qualityLevel);
+                    fishWorth = fishWorth * Math.pow(1.1, activeStats.qualityLevel);
                     
                     earnings += Math.round(fishWorth);
                     
@@ -1223,8 +1268,10 @@
                 }
             });
 
-            // 3. Process Balance Changes 
+            // 3. Process Balance Changes and logging area separate revenues
             currentMoney += earnings;
+            activeStats.earnings = (activeStats.earnings || 0) + earnings;
+
             moneyCounter.innerText = currentMoney + '$';
             updateUpgradesUI();
             saveGameProgress();
