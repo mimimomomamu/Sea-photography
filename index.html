@@ -158,7 +158,6 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            animation: swimWobble 0.7s infinite ease-in-out;
         }
 
         /* Camera Frame Container */
@@ -614,7 +613,8 @@
                         maxSpeed: 1.6,
                         rarity: 80,
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                     },
                     {
                         id: "anchovy",
@@ -628,7 +628,8 @@
                         maxSpeed: 2.2,
                         rarity: 13,
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                     },
                     {
                         id: "Mola_mola",
@@ -642,7 +643,8 @@
                         maxSpeed: 1.5,
                         rarity: 8,
                         vStretch: 1.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                     },
                     {
                         id: "Mahi_mahi",
@@ -656,7 +658,8 @@
                         maxSpeed: 4,
                         rarity: 3.5,
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                     },
                     {
                         id: "Golden_sardine",
@@ -670,7 +673,8 @@
                         maxSpeed: 2.5,
                         rarity: 0.2,
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                     },
                     {
                         id: "Whale_shark",
@@ -684,7 +688,8 @@
                         maxSpeed: 1,
                         rarity: 0.5,
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                      },
                      {
                         id: "marlin",
@@ -698,7 +703,8 @@
                         maxSpeed: 6.5,
                         rarity: 2,
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                     }
                 ]
             },
@@ -721,7 +727,8 @@
                         maxSpeed: 2,
                         rarity: 60, // Sole inhabitant initially, 100% chance inside this pool
                         vStretch: 2.0,
-                        isBottomDwelling: false
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
                      },
                      {
                         id: "goldenclownfish",
@@ -735,9 +742,10 @@
                         maxSpeed: 2.5,
                         rarity: 1,
                         vStretch: 2.0,
-                        isBottomDwelling: false          
-                      },
-                      {
+                        isBottomDwelling: false,        
+                        movementStyle: "squash"
+                     },
+                     {
                         id: "Angel_fish",
                         name: "Angel fish",
                         description: "a very pretty fish",
@@ -749,9 +757,10 @@
                         maxSpeed: 2.5,
                         rarity: 39,
                         vStretch: 1.0,
-                        isBottomDwelling: false
-                       },
-                       {
+                        isBottomDwelling: false,
+                        movementStyle: "squash"
+                      },
+                      {
                         id: "Moray_eel",
                         name: "Moray eel",
                         description: "his mouth has a mouth, watch out",
@@ -763,7 +772,23 @@
                         maxSpeed: 2.5,
                         rarity: 6,
                         vStretch: 2,
-                        isBottomDwelling: true    
+                        isBottomDwelling: true,    
+                        movementStyle: "squash"
+                      },
+                      {
+                        id: "Coral_piece",
+                        name: "Coral piece",
+                        description: "a piece of coral that was broken off, will soon die",
+                        imageSrc: "piece.png", 
+                        value: 100,
+                        baseWidth: 170,
+                        baseHeight: 170,
+                        minSpeed: 1.5,
+                        maxSpeed: 2.5,
+                        rarity: 8,
+                        vStretch: 1,
+                        isBottomDwelling: false,    
+                        movementStyle: "rotate"
                     }
                 ]
             }
@@ -1352,8 +1377,12 @@
                 const img = document.createElement('img');
                 img.src = fishData.imageSrc;
                 img.classList.add('sardine-img');
+
+                if (fishData.movementStyle === "squash") {
+                    img.style.animation = "swimWobble 0.7s infinite ease-in-out";
+                    img.style.animationDelay = (Math.random() * -0.7) + "s";
+                }
                 
-                img.style.animationDelay = (Math.random() * -0.7) + 's';
                 container.appendChild(img);
                 
                 let minY, maxY;
@@ -1411,18 +1440,29 @@
                     id: fishData.id,
                     element: container,
                     imgElement: img,
+
                     x: startX,
                     y: topPos,
                     targetX: targetX,
+
                     speed: speed,
                     direction: side === 'left' ? 1 : -1,
-                    width: finalWidth,  
+
+                    width: finalWidth,
                     height: finalHeight,
+
                     value: finalValue,
                     name: fishData.name,
                     description: fishData.description,
+
                     sizeMultiplier: sizeMultiplier,
                     vStretch: fishData.vStretch !== undefined ? fishData.vStretch : 2.0,
+
+    // NEW
+                    movementStyle: fishData.movementStyle || "squash",
+                    rotation: 0,
+                    rotationSpeed: (Math.random() - 0.5) * 0.8,
+                    
                     hasBeenPhotographed: false
                 };
 
@@ -1451,6 +1491,20 @@
                 // Multiply movement by delta to ensure steady, uniform swimming speeds
                 fish.x += (fish.speed * fish.direction) * delta;
                 fish.element.style.left = fish.x + 'px';
+
+                if (fish.movementStyle === "rotate") {
+
+                   fish.rotation += fish.rotationSpeed;
+
+                // Keep it from spinning forever
+                   if (fish.rotation > 20) fish.rotationSpeed *= -1;
+                   if (fish.rotation < -20) fish.rotationSpeed *= -1;
+
+                   const flip = fish.direction === 1 ? -1 : 1;
+
+                   fish.element.style.transform =
+                       `scaleX(${flip}) rotate(${fish.rotation}deg)`;
+                }
 
                 if ((fish.direction === 1 && fish.x > fish.targetX) || 
                     (fish.direction === -1 && fish.x < fish.targetX)) {
@@ -1567,6 +1621,10 @@
                     const offsetY = fishCenterY - viewRect.height / 2;
                     
                     pCtx.translate(offsetX, offsetY);
+
+                    if (fish.movementStyle === "rotate") {
+                        pCtx.rotate(fish.rotation * Math.PI / 180);
+                    }
                     
                     if (fish.direction === 1) {
                         pCtx.scale(-1, 1);
@@ -1671,6 +1729,10 @@
                     const offsetX = (relX + fRect.width / 2) - viewRect.width / 2;
                     const offsetY = (relY + fRect.height / 2) - viewRect.height / 2;
                     pCtx.translate(offsetX, offsetY);
+
+                    if (fish.movementStyle === "rotate") {
+                        pCtx.rotate(fish.rotation * Math.PI / 180);
+                    }
                     
                     if (fish.direction === 1) {
                         pCtx.scale(-1, 1);
