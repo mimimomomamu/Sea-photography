@@ -1707,6 +1707,19 @@
         activeSpawnTimeoutId = setTimeout(spawnSardine, 1000);
         requestAnimationFrame(updateSardines);
 
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                if (activeSpawnTimeoutId) {
+                clearTimeout(activeSpawnTimeoutId);
+                activeSpawnTimeoutId = null;
+                }
+            } else {
+                if (!activeSpawnTimeoutId) {
+                    activeSpawnTimeoutId = setTimeout(spawnSardine, 500);
+                }
+            }
+        });
+
         // Map and render the area's background image mapping precisely to CSS' background-size: cover
         function drawBackground(ctx, viewRect, zoomValue, currentZone) {
             if (currentZone.id === "coral_reef" && hideCoralImageBackground) {
