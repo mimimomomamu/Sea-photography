@@ -1508,7 +1508,7 @@
                 // Baseline 15% chance + size level bonus increases the chance slightly (1% per level up)
                 const giantSpawnChance = 0.15 + (sizeLevel * 0.01);
                 const isGiantVariant = Math.random() < giantSpawnChance;
-                const sizeMultiplier = isGiantVariant ? 2.0 : 1.0;
+                const sizeMultiplier = isGiantVariant ? 1.2 : 1.0;
                 const finalWidth = fishData.baseWidth * sizeMultiplier;
                 const finalHeight = fishData.baseHeight * sizeMultiplier;
                 const finalValue = fishData.value * (isGiantVariant ? 2 : 1);
