@@ -1491,7 +1491,7 @@
                 let adjustedRarity = fish.rarity;
                 if (rarityLevel > 0) {
                     if (fish.id === 'sardine') {
-                        adjustedRarity = Math.max(20, fish.rarity - (rarityLevel * 2));
+                        adjustedRarity = Math.max(20, fish.rarity - (rarityLevel * 1.2));
                     } else if (fish.id === 'Golden_sardine') {
                         adjustedRarity = fish.rarity + (rarityLevel * 0.05);
                     } else if (fish.id === 'Whale_shark' || fish.id === 'marlin' || fish.id === 'Mahi_mahi') {
