@@ -800,7 +800,7 @@
                 name: "Coral Reef",
                 backgroundColor: "#a99fe3", // Set to sand color from image
                 backgroundImage: "coral.png",
-                costToUnlock: 20000,
+                costToUnlock: 1500,
                 fish: [
                     {
                         id: "Clownfish",
@@ -953,7 +953,7 @@
                 name: "The abyss",
                 backgroundColor: "#050126", // Set to sand color from image
                 backgroundImage: "",
-                costToUnlock: 250000,
+                costToUnlock: 2000,
                 fish: [
                     {
                         id: "Marine_snow",
@@ -1033,8 +1033,32 @@
                         vStretch: 1,
                         isBottomDwelling: false,    
                         movementStyle: "squash",
-                        schooling: true
+                        schooling: false
                     }
+                ]
+            },
+            {
+                id: "Amazon",
+                name: "The Amazon",
+                backgroundColor: "#2b6e4e", // Set to sand color from image
+                backgroundImage: "",
+                costToUnlock: 500000,
+                fish: [
+                    {
+                        id: "piranha",
+                        name: "piranha",
+                        description: "a bity fish that likes to school",
+                        imageSrc: "pir.png", 
+                        value: 80,
+                        baseWidth: 200,
+                        baseHeight: 100,
+                        minSpeed: 1,
+                        maxSpeed: 3,
+                        rarity: 100, // Sole inhabitant initially, 100% chance inside this pool
+                        vStretch: 2.0,
+                        isBottomDwelling: false,
+                        movementStyle: "squash",
+                        schooling: true
                 ]
             }
         ];
