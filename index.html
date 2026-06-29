@@ -1659,8 +1659,8 @@
             }
 
             // Handles spawn speed dynamically based on Spawn Rate upgrades
-            let nextSpawnDelay = Math.random() * 6200 + 750;
-            const spawnMultiplier = Math.pow(0.8, spawnLevel);
+            let nextSpawnDelay = Math.random() * 8000 + 750;
+            const spawnMultiplier = Math.pow(0.9, spawnLevel);
             nextSpawnDelay = nextSpawnDelay * spawnMultiplier;
 
             activeSpawnTimeoutId = setTimeout(spawnSardine, nextSpawnDelay);
